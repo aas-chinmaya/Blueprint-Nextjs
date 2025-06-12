@@ -3,7 +3,19 @@ import { authMiddleware } from '@/middleware/authMiddleware';
 import { roleMiddleware } from '@/middleware/roleMiddleware';
 
 export function middleware(request) {
-  const protectedPaths = ['/dashboard', '/project', '/task', '/client', '/bug','/team'];
+  const protectedPaths = [
+    '/dashboard',
+    '/contact',
+    '/meeting',
+    '/quotation',
+    '/client',
+    '/project',
+    '/team',
+    '/task',
+    '/bug',
+    '/report',
+  ];
+
   const { pathname } = request.nextUrl;
 
   const isProtected = protectedPaths.some(path => pathname.startsWith(path));
@@ -22,10 +34,14 @@ export function middleware(request) {
 export const config = {
   matcher: [
     '/dashboard/:path*',
-    '/projects/:path*',
-    '/teams/:path*',
-    '/tasks/:path*',
-    '/clients/:path*',
-    '/bugs/:path*',
+    '/contact/:path*',
+    '/meeting/:path*',
+    '/quotation/:path*',
+    '/client/:path*',
+    '/project/:path*',
+    '/team/:path*',
+    '/task/:path*',
+    '/bug/:path*',
+    '/report/:path*',
   ],
 };
