@@ -1,17 +1,55 @@
-import DashboardContainer from "@/components/containers/cpcdashboard";
+'use client';
+
+import CpcDashboard from '@/components/dashboard2/dashboardcontainer/CpcDashboard';
+import EmployeeDashboard from '@/components/dashboard2/dashboardcontainer/EmployeeDashboard';
+import { useState } from 'react';
+
+import { useDispatch, useSelector } from "react-redux";
 
 
 
-export default function Page() {
+
+
+export default function page() {
+      const { userData, employeeData, loading: userLoading } = useSelector(state => state.user) || {};
+
+
+const currentUser = {
+  // role: "employee", // Change to 'employee' or 'team_lead' for testing
+  role: employeeData?.designation, // Change to 'employee' or 'team_lead' for testing
+  name: employeeData?.name,
+  teamLeadId: 'TL001', // Set to null for employees without team lead role
+};
   return (
     <>
-     
-        <DashboardContainer/>
-     
-      
+      {currentUser.role === "cpc" ? (
+        <CpcDashboard  currentUser={currentUser} />
+      ) : (
+        <EmployeeDashboard  currentUser={currentUser} />
+      )}
     </>
   );
 }
+
+
+
+
+
+
+// import DashboardContainer from "@/components/containers/cpcdashboard";
+
+
+
+// export default function Page() {
+//   return (
+//     <>
+     
+//         <DashboardContainer/>
+     
+      
+//     </>
+//   );
+// }
 
 
 

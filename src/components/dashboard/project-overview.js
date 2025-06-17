@@ -54,7 +54,7 @@ const transformData = (projects) => {
     .filter(Boolean);
 };
 
-export  function ProjectOverview() {
+export  function Project() {
   const { projects = [] } = useSelector((state) => state.fetchallProjects);
   const chartData = useMemo(() => transformData(projects), [projects]);
 

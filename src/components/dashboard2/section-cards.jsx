@@ -1,5 +1,5 @@
 import { IconTrendingDown, IconTrendingUp } from "@tabler/icons-react"
-
+ 
 import { Badge } from "@/components/ui/badge"
 import {
   Card,
@@ -16,7 +16,7 @@ import { getAllTaskList } from "@/store/features/TaskSlice";
 import { fetchClients } from "@/store/features/projectonboardingSlice";
 export function SectionCards() {
     const dispatch = useDispatch();
-
+ 
   const { projects, status, error } = useSelector(
     (state) => state.fetchallProjects
   );
@@ -26,13 +26,18 @@ const currentUser = {
   name: employeeData?.name,
  
 };
-  const { clients, fetchClientsLoading, fetchClientsError } = useSelector((state) => state.client);
-
-
+  // const { clients, fetchClientsLoading, fetchClientsError } = useSelector((state) => state.projectOnboarding);
+  const { clients, loading, onboardingError } = useSelector((state) => state.projectOnboarding);
+ 
+ 
+ 
+ 
+ 
+ 
   const { allTaskList } = useSelector((state) => state.task);
   console.log("Projects:", projects);
 console.log("Clients:", clients);
-
+ 
   useEffect(() => {
     dispatch(fetchAllProjects());
     dispatch(getAllTaskList());
@@ -68,7 +73,7 @@ console.log("Clients:", clients);
         <CardHeader>
           <CardDescription>All Client's</CardDescription>
           <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-            {clients.length}
+            {Array.isArray(clients) ? clients.length : 0}
           </CardTitle>
           <CardAction>
             <Badge variant="outline">
@@ -129,3 +134,5 @@ console.log("Clients:", clients);
     </div>
   );
 }
+ 
+ 

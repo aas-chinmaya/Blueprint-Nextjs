@@ -78,7 +78,7 @@ export default function UpcomingTasks() {
       {/* Task List */}
       {status === "loading" && <div>Loading tasks...</div>}
       {status === "failed" && <div className="text-red-500">{error || "Failed to load tasks"}</div>}
-      {status === "succeeded" && data?.tasks?.length === 0 && <div>No tasks available</div>}
+      {status === "succeeded" && data.data?.tasks?.length === 0 && <div>No tasks available</div>}
 
       <AnimatePresence>
         {status === "succeeded" && data.data?.map((task, index) => (

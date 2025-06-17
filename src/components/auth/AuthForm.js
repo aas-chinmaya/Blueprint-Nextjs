@@ -14,7 +14,7 @@ import { Eye, EyeOff, AlertCircle, Home, Leaf, Shield } from "lucide-react";
 const Login = () => {
   const [mode, setMode] = useState("login");
   const [email, setEmail] = useState("chinmaya@aas.technology");
-  const [password, setPassword] = useState("12345678");
+  const [password, setPassword] = useState("Chin@2025");
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [otp, setOtp] = useState(Array(6).fill(""));
