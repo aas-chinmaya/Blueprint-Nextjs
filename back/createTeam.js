@@ -12,8 +12,10 @@ import {
   FiLoader,
   FiX,
 } from "react-icons/fi";
-import { toast } from '@/components/ui/use-toast';
-import { fetchTeamMembers, createTeam } from "@/store/features/teamSlice";
+import { toast } from '@/components/ui/use-toast';import {
+  fetchTeamMembers,
+  createTeam,
+} from "@/store/features/teamSlice";
 
 const CreateTeamForm = ({ projectDetails, onSuccess }) => {
   const dispatch = useDispatch();
@@ -32,19 +34,40 @@ const CreateTeamForm = ({ projectDetails, onSuccess }) => {
     }
   }, [dispatch, membersStatus]);
 
-  const memberOptions = useMemo(() => {
-    if (!allMembers || !Array.isArray(allMembers)) return [];
+  // const memberOptions = useMemo(() => {
+  //   if (!members || !Array.isArray(members)) return [];
 
-    return allMembers.map((member) => ({
-      value: member.employeeID,
-      label: member.name || `${member.firstName} ${member.lastName}`.trim(),
-      email: member.email,
-      firstName: member.firstName,
-      lastName: member.lastName,
-      id: member.employeeID,
-      designation: member.designation, // Include designation for use in role field
-    }));
-  }, [allMembers]);
+  //   return members.map((member) => ({
+  //     value: member.employeeID,
+  //     label: member.name || `${member.firstName} ${member.lastName}`.trim(),
+  //     email: member.email,
+  //     firstName: member.firstName,
+  //     lastName: member.lastName,
+  //     id: member.employeeID,
+  //   }));
+  // }, []);
+
+const memberOptions = useMemo(() => {
+  if (!allMembers || !Array.isArray(allMembers)) return [];
+
+  return allMembers.map((member) => ({
+    value: member.employeeID,
+    label: member.name || `${member.firstName} ${member.lastName}`.trim(),
+    email: member.email,
+    firstName: member.firstName,
+    lastName: member.lastName,
+    id: member.employeeID,
+  }));
+}, [allMembers]);
+
+  const roleOptions = [
+    { value: "Frontend Developer", label: "Frontend Developer" },
+    { value: "Backend Developer", label: "Backend Developer" },
+    { value: "DevOps Engineer", label: "DevOps Engineer" },
+    { value: "Full Stack Developer", label: "Full Stack Developer" },
+    { value: "UI/UX Designer", label: "UI/UX Designer" },
+    { value: "QA Engineer", label: "QA Engineer" },
+  ];
 
   const customSelectStyles = {
     control: (base) => ({
@@ -105,15 +128,6 @@ const CreateTeamForm = ({ projectDetails, onSuccess }) => {
     }),
   };
 
-  // Automatically set memberRoles when selectedMembers change
-  useEffect(() => {
-    const updatedRoles = {};
-    selectedMembers.forEach((member) => {
-      updatedRoles[member.value] = { value: member.designation, label: member.designation };
-    });
-    setMemberRoles(updatedRoles);
-  }, [selectedMembers]);
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -125,11 +139,11 @@ const CreateTeamForm = ({ projectDetails, onSuccess }) => {
       }
 
       const missingRoles = selectedMembers.filter(
-        (member) => !memberRoles[member.value]?.value
+        (member) => !memberRoles[member.value]
       );
       if (missingRoles.length > 0) {
         throw new Error(
-          `Designation missing for: ${missingRoles
+          `Please select roles for: ${missingRoles
             .map((m) => m.label)
             .join(", ")}`
         );
@@ -138,7 +152,7 @@ const CreateTeamForm = ({ projectDetails, onSuccess }) => {
       const formattedTeamMembers = selectedMembers.map((member) => ({
         memberId: member.value,
         memberName: member.label,
-        role: memberRoles[member.value]?.value || member.designation, // Use designation as role
+        role: memberRoles[member.value]?.value,
         email: member.email,
       }));
 
@@ -176,6 +190,13 @@ const CreateTeamForm = ({ projectDetails, onSuccess }) => {
     setMemberRoles(updatedRoles);
   };
 
+  const handleRoleChange = (memberId, selectedRole) => {
+    setMemberRoles((prev) => ({
+      ...prev,
+      [memberId]: selectedRole,
+    }));
+  };
+
   const handleClose = () => {
     setIsModalOpen(false);
     onSuccess?.();
@@ -198,9 +219,7 @@ const CreateTeamForm = ({ projectDetails, onSuccess }) => {
           <label className="block text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-1.5">
             <FiFolder className="h-4 w-4 text-gray-400" /> Project Name
           </label>
-          <div className="p-2.5 sm:p-3 bg-gray-50 rounded-lg border border-gray-200
-
- text-sm sm:text-base text-gray-700">
+          <div className="p-2.5 sm:p-3 bg-gray-50 rounded-lg border border-gray-200 text-sm sm:text-base text-gray-700">
             {projectDetails.name || "N/A"}
           </div>
         </div>
@@ -260,6 +279,13 @@ const CreateTeamForm = ({ projectDetails, onSuccess }) => {
                   onChange={(selected) => {
                     const updatedSelected = selected ?? [];
                     setSelectedMembers(updatedSelected);
+                    const newRoles = { ...memberRoles };
+                    Object.keys(newRoles).forEach((key) => {
+                      if (!updatedSelected.some((s) => s.value === key)) {
+                        delete newRoles[key];
+                      }
+                    });
+                    setMemberRoles(newRoles);
                   }}
                   options={memberOptions}
                   getOptionLabel={(e) => e.label}
@@ -318,13 +344,34 @@ const CreateTeamForm = ({ projectDetails, onSuccess }) => {
                           </p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2 z-5000">
-                        <div
-                          className="min-w-[120px] max-w-[150px] p-2 bg-gray-100 rounded-lg text-sm text-gray-700"
-                          title={member.designation || "No designation"}
-                        >
-                          {member.designation || "N/A"}
-                        </div>
+                      <div className="flex items-center gap-2  z-5000">
+                        <Select
+                          value={memberRoles[member.value]}
+                          onChange={(role) =>
+                            handleRoleChange(member.value, role)
+                          }
+                          options={roleOptions}
+                          placeholder="Select Role"
+                          styles={{
+                            ...customSelectStyles,
+                            control: (base) => ({
+                              ...customSelectStyles.control(base),
+                              minWidth: "120px",
+                              maxWidth: "150px",
+                            }),
+                            menuPortal: (base) => ({
+                              ...base,
+                              zIndex: 9999, // Force it on top of all layers
+                            }),
+                            menu: (base) => ({
+                              ...base,
+                              zIndex: 9999,
+                            }),
+                          }}
+                          className="text-sm"
+                          menuPortalTarget={document.body} // Important for detaching the menu from its container
+                        />
+
                         <button
                           type="button"
                           onClick={() => removeTeamMember(member)}

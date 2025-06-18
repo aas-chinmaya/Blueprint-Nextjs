@@ -150,10 +150,10 @@ console.log(project, 'project');
   if (!project) return null;
 
   return (
-    <div className="container mx-auto  min-h-screen ">
+    <div className="   min-h-screen ">
       {/* Header Section */}
-      <Card className=" shadow-xl mb-4 ">
-        <CardHeader className=" border-b border-green-100">
+      <Card className=" shadow-xl  ">
+        <CardHeader className=" ">
          <div className="flex items-center gap-4">
               <Button
                 variant="outline"

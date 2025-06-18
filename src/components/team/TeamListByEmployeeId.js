@@ -86,9 +86,33 @@ const TeamListByEmployeeId = ({ employeeId }) => {
         cell: ({ row }) => <span>{row.original.projectName}</span>,
       },
       {
+        accessorKey: 'project Id',
+        header: 'Project Id',
+        cell: ({ row }) => <span>{row.original.projectId}</span>,
+      },
+      {
         accessorKey: 'teamLeadName',
         header: 'Team Lead',
         cell: ({ row }) => <span>{row.original.teamLeadName}</span>,
+      },
+      {
+        accessorKey: "Status",
+        header: "Status",
+        cell: ({ row }) => {
+          const isDeleted = row.original.isDeleted;
+          const statusText = isDeleted ? "Inactive" : "Active";
+          const statusColor = isDeleted
+            ? "bg-red-200 text-red-800"
+            : "bg-green-200 text-green-800";
+
+          return (
+            <span
+              className={`px-3 py-1 rounded-full text-sm font-medium ${statusColor}`}
+            >
+              {statusText}
+            </span>
+          );
+        },
       },
       {
         id: 'actions',
@@ -167,14 +191,14 @@ const TeamListByEmployeeId = ({ employeeId }) => {
   });
 
   return (
-    <div className="mx-auto p-6">
+    <div className="">
       <Card className="shadow-lg border-green-300">
         <CardHeader>
           <CardTitle className="text-2xl font-bold text-green-800">
             My Worked Teams
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-6 min-h-screen">
           {/* Search and Filter Controls */}
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="relative flex-1">
@@ -288,7 +312,7 @@ const TeamListByEmployeeId = ({ employeeId }) => {
                     className="border-green-300 text-green-700 hover:bg-green-50"
                   >
                     <ChevronLeft className="h-4 w-4" />
-                    Previous
+                    Prev
                   </Button>
                   <Button
                     variant="outline"

@@ -453,7 +453,7 @@ const ContactsList = () => {
 
       {/* View Contact Modal */}
       <Dialog open={isViewModalOpen} onOpenChange={closeViewModal}>
-        <DialogContent className="border-green-300 bg-green-50 max-w-2xl rounded-2xl shadow-xl">
+        <DialogContent className="border-green-300 bg-green-50 max-w-2xl rounded-2xl shadow-xl cursor-pointer">
           <DialogHeader className="bg-green-100 p-4 rounded-t-2xl">
             <DialogTitle className="text-green-800 text-2xl font-bold flex items-center">
               <User className="h-6 w-6 mr-2" />
@@ -589,25 +589,12 @@ const ContactsList = () => {
                     : "N/A"}
                 </p>
               </div>
-              <div className="flex items-center">
-                <Trash2 className="h-5 w-5 mr-2 text-green-600" />
-                <p>
-                  <strong>Deleted:</strong> {selectedContact.isDeleted ? "Yes" : "No"}
-                </p>
-              </div>
+              
             </div>
           ) : (
             <div className="text-green-700 text-lg p-6">No contact selected.</div>
           )}
-          <DialogFooter className="p-4">
-            <Button
-              variant="outline"
-              className="border-green-500 text-green-700 hover:bg-green-100"
-              onClick={closeViewModal}
-            >
-              Close
-            </Button>
-          </DialogFooter>
+         
         </DialogContent>
       </Dialog>
 

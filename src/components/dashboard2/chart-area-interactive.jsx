@@ -500,7 +500,7 @@ export function ChartAreaInteractive() {
         <CardTitle>Project Metrics</CardTitle>
         <CardDescription>
           <span className="hidden @[540px]/card:block">
-            Project, task, and team activity for the last 3 months
+           Recent  Project, task, and team activity
           </span>
           <span className="@[540px]/card:hidden">Last 3 months</span>
         </CardDescription>

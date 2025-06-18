@@ -476,14 +476,14 @@ const AllTasksList = () => {
                       >
                         <FiEdit className="w-5 h-5" />
                       </Button>
-                      <Button
+                      {/* <Button
                         variant="ghost"
                         size="icon"
                         className="text-red-600 hover:text-red-800 hover:bg-red-100"
                         onClick={() => handleDeleteTask(task.task_id)}
                       >
                         <FiTrash2 className="w-5 h-5" />
-                      </Button>
+                      </Button> */}
                     </div>
                   </TableCell>
                 </TableRow>

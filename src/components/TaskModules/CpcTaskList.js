@@ -423,7 +423,6 @@ export default function TaskList() {
                   {sortField === 'priority' && (sortDirection === 'asc' ? <FiArrowUp className="inline ml-1" /> : <FiArrowDown className="inline ml-1" />)}
                 </TableHead>
                 <TableHead className="text-green-800">Project ID</TableHead>
-                <TableHead className="text-green-800">Deleted</TableHead>
                 <TableHead className="text-green-800">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -445,7 +444,6 @@ export default function TaskList() {
                     </Badge>
                   </TableCell>
                   <TableCell className="text-green-900">{task.projectId || 'N/A'}</TableCell>
-                  <TableCell className="text-green-900">{task.isDeleted ? 'Yes' : 'No'}</TableCell>
                   <TableCell>
                     <div className="flex gap-2">
                       <Button

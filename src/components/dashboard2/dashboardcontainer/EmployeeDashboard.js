@@ -32,7 +32,6 @@ const { allTaskList } = useSelector((state) => state.task);
   console.log("All Tasks:", allTaskList);
   return (
     <>
-     <h2>EmployeeDashboard</h2>
       <SectionCards />
       <div className="px-4 lg:px-6">
         <ChartAreaInteractive />
