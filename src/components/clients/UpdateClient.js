@@ -81,7 +81,7 @@ export default function UpdateClient() {
         }
       });
     };
-  }, [dispatch, clientId]);
+  });
 
   const validateInput = (name, value) => {
     const cleanValue = DOMPurify.sanitize(value, { ALLOWED_TAGS: [], ALLOWED_ATTR: [] });

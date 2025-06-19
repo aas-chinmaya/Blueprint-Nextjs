@@ -5,7 +5,7 @@
 
 'use client';
 
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useRouter } from 'next/navigation';
 import { toast } from "@/components/ui/use-toast"; // ✅ Call the toast method
@@ -50,25 +50,21 @@ export default function AddClient() {
     onboardingDate: useRef(null),
   };
 
-  useEffect(() => {
-    const preventPaste = (e) => {
-      e.preventDefault();
-      setErrors((prev) => ({ ...prev, [e.target.name]: 'Pasting is not allowed' }));
-    };
+useEffect(() => {
+  const preventPaste = (e) => {
+    e.preventDefault();
+    setErrors((prev) => ({ ...prev, [e.target.name]: 'Pasting is not allowed' }));
+  };
+  Object.values(inputRefs).forEach((ref) => {
+    ref.current?.addEventListener('paste', preventPaste);
+  });
+  return () => {
     Object.values(inputRefs).forEach((ref) => {
-      if (ref.current) {
-        ref.current.addEventListener('paste', preventPaste);
-      }
+      ref.current?.removeEventListener('paste', preventPaste);
     });
+  };
+});
 
-    return () => {
-      Object.values(inputRefs).forEach((ref) => {
-        if (ref.current) {
-          ref.current.removeEventListener('paste', preventPaste);
-        }
-      });
-    };
-  }, []);
 
   const validateInput = (name, value) => {
     const cleanValue = DOMPurify.sanitize(value, { ALLOWED_TAGS: [], ALLOWED_ATTR: [] });
@@ -259,34 +255,26 @@ export default function AddClient() {
     try {
       await dispatch(addClient(formDataToSend)).unwrap();
       dispatch(resetForm());
-      toast.success('Client Added!', {
-        position: 'top-right',
-        autoClose: 3000,
-        hideProgressBar: true,
-      });
+      toast.success('Client Added!');
       router.push('/client');
       setErrors({});
     } catch (error) {
-      toast.error('Error while onboarding client!', {
-        position: 'top-right',
-        autoClose: 3000,
-        hideProgressBar: true,
-      });
+      toast.error('Error while onboarding client!');
     }
   };
 
-  const handleReset = () => {
-    dispatch(resetForm());
-    setErrors({});
-    if (fileInputRef.current) {
-      fileInputRef.current.value = null;
-    }
-  };
 
+const handleReset = useCallback(() => {
+  dispatch(resetForm());
+  setErrors({});
+  if (fileInputRef.current) {
+    fileInputRef.current.value = null;
+  }
+}, [dispatch]);
   // Call on page load
   useEffect(() => {
     handleReset();
-  }, []); // Empty dependency array ensures it runs once on mount
+  }, [handleReset]); // Empty dependency array ensures it runs once on mount
   const handleRemoveFile = (index) => {
     dispatch(removeFile(index));
   };

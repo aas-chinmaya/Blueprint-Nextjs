@@ -17,7 +17,7 @@ export const metadata = {
 export default function DashboardLayout({ children }) {
   return (
     <html lang="en"   suppressHydrationWarning>
-      <body className={`${inter.className} antialiased`}>
+      <body className={`${inter.className} antialiased`} cz-shortcut-listen="true">
         <ThemeProvider
           attribute="class"
           defaultTheme="light"

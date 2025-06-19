@@ -311,7 +311,7 @@ export default function ClientDetails() {
                     No Projects Found
                   </Typography>
                   <Typography variant="p" className="text-gray-500">
-                    This client doesn't have any associated projects yet.
+                   {`This client doesn't have any associated projects yet.`}
                   </Typography>
                 </div>
               )}

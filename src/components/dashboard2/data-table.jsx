@@ -214,12 +214,12 @@ export function DataTable() {
             <CalendarDays />
             Deadline: {new Date(item.deadline).toLocaleDateString()}
           </p>
-          <Button
+          {/* <Button
             className="w-1/4 ml-80 bg-green-600"
             onClick={() => router.push(`/task/${item.task_id}`)}
           >
             View More
-          </Button>
+          </Button> */}
         </div>
       );
     } else if (type === "project") {

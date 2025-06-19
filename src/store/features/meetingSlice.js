@@ -35,7 +35,7 @@ export const createMeeting = createAsyncThunk(
 
 export const updateMeeting = createAsyncThunk(
   'meetings/updateMeeting',
-  async ({ meetingData }, { rejectWithValue }) => {
+  async ( meetingData , { rejectWithValue }) => {
     try {
       const response = await axiosInstance3.post(`/meeting/update`, meetingData);
       return response.data;
@@ -69,6 +69,22 @@ export const getMeetingById = createAsyncThunk(
   }
 );
 
+
+
+export const fetchMeetingsByContactId = createAsyncThunk(
+  'meetings/fetchMeetingsByContactId',
+  async (contactId, { rejectWithValue }) => {
+    try {
+      const response = await axiosInstance3.get(`/meetings/contact/${contactId}`);
+      console.log("Fetched contact meetings:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("Error in fetchMeetingsByContactId:", error);
+      return rejectWithValue(error.response?.data?.message || 'Failed to fetch meetings by contactId');
+    }
+  }
+);
+
 const initialState = {
   meetings: [],
   selectedMeeting: null,
@@ -77,6 +93,9 @@ const initialState = {
   createLoading: false,
   updateLoading: false,
   deleteLoading: false,
+  contactMeetings: [],
+  contactMeetingsLoading: false,
+  contactMeetingsError: null,
   modals: {
     isCreateOpen: false,
     isEditOpen: false,
@@ -183,7 +202,23 @@ const meetingSlice = createSlice({
       .addCase(getMeetingById.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
-      });
+      })
+      
+      
+      // Fetch meetings by contact ID
+       .addCase(fetchMeetingsByContactId.pending, (state) => {
+  state.contactMeetingsLoading = true;
+  state.contactMeetingsError = null;
+})
+.addCase(fetchMeetingsByContactId.fulfilled, (state, action) => {
+  state.contactMeetingsLoading = false;
+  state.contactMeetings = action.payload.events;
+})
+.addCase(fetchMeetingsByContactId.rejected, (state, action) => {
+  state.contactMeetingsLoading = false;
+  state.contactMeetingsError = action.payload;
+})
+;
   },
 });
 

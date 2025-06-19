@@ -58,7 +58,7 @@ export const fetchClientById = createAsyncThunk(
       if (!clientId) throw new Error('No client ID provided');
       const response = await axiosInstance.get(`/client/getClientById/${clientId}`);
       if (!response.data?.success || !response.data?.client) {
-        console.error('Invalid response format:', response.data);
+      
         throw new Error('Invalid response format from server');
       }
       const client = response.data.client;
@@ -77,7 +77,6 @@ export const fetchClientById = createAsyncThunk(
         },
       };
     } catch (error) {
-      console.error('Error fetching client:', error);
       return rejectWithValue(error.response?.data?.message || 'Failed to fetch client data');
     }
   }
@@ -90,7 +89,6 @@ export const fetchProjectsByClientId = createAsyncThunk(
       if (!clientId) throw new Error('No client ID provided');
       const response = await axiosInstance.get(`/projects/getallprojectsbyclientid/${clientId}`);
       if (!response.data || !Array.isArray(response.data)) {
-        console.error('Invalid response format:', response.data);
         throw new Error('Invalid response format from server');
       }
       const formattedProjects = response.data.map((project) => ({
@@ -103,7 +101,6 @@ export const fetchProjectsByClientId = createAsyncThunk(
       }));
       return formattedProjects;
     } catch (error) {
-      console.error('Error fetching projects:', error);
       return rejectWithValue(error.response?.data?.message || 'Failed to fetch project data');
     }
   }

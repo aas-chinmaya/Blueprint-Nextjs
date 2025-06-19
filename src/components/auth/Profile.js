@@ -80,7 +80,6 @@ export default function ProfileDetails() {
               <InfoRow icon={<Users className="text-purple-500" />} label="Department" value={employeeData?.department} />
               <InfoRow icon={<Calendar className="text-red-500" />} label="Joining Date" value={employeeData?.joiningDate ? new Date(employeeData.joiningDate).toLocaleDateString() : "Not available"} />
               <InfoRow icon={<DollarSign className="text-emerald-500" />} label="CTC" value={employeeData?.ctc ? `₹${employeeData.ctc.toLocaleString()}` : "Not available"} />
-              <InfoRow icon={<MapPin className="text-indigo-500" />} label="Location" value={userData?.location || "Not specified"} />
             </TableBody>
           </Table>
         </CardContent>

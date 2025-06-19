@@ -1,19 +1,20 @@
 import { NextResponse } from 'next/server';
 import { authMiddleware } from '@/middleware/authMiddleware';
-import { roleMiddleware } from '@/middleware/roleMiddleware';
+
 
 export function middleware(request) {
   const protectedPaths = [
     '/dashboard',
     '/contact',
-    '/meeting',
-    '/quotation',
+    '/meetings',
+    '/profiles',
+   
     '/client',
     '/project',
     '/team',
     '/task',
     '/bug',
-    '/report',
+   
   ];
 
   const { pathname } = request.nextUrl;
@@ -24,8 +25,8 @@ export function middleware(request) {
     const auth = authMiddleware(request);
     if (auth) return auth;
 
-    const role = roleMiddleware(request);
-    if (role) return role;
+    // const role = roleMiddleware(request);
+    // if (role) return role;
   }
 
   return NextResponse.next();

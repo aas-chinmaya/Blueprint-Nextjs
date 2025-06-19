@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Eye, EyeOff, AlertCircle, Home, Leaf, Shield } from "lucide-react";
+import { toast } from "@/components/ui/use-toast"; // ✅ Call the toast method
 
 const Login = () => {
   const [mode, setMode] = useState("login");
@@ -111,6 +112,7 @@ const Login = () => {
         verifyOtp({ email, otp: otpValue })
       ).unwrap();
       if (response.message === "Login successful") {
+        toast.success("Login successful!...");
         setMode("login");
         router.push("/dashboard");
       } else {
@@ -390,7 +392,7 @@ const Login = () => {
               >
                 {isResendDisabled ? (
                   <span className="flex items-center gap-2">
-                    ⏱️ Fresh code in {timer}s
+                    ⏱️ Fresh otp in {timer}s
                   </span>
                 ) : (
                   <span className="flex items-center gap-2">
@@ -411,7 +413,7 @@ const Login = () => {
                   </div>
                 ) : (
                   <div className="flex items-center gap-2">
-                    ✅ Verify Green Code
+                    ✅ Verify OTP
                   </div>
                 )}
               </Button>

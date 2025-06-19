@@ -25,10 +25,7 @@ export const login = createAsyncThunk(
     try {
 
       const response = await axiosInstance2.post('/hrms/login', { email, password });
-      // if (response.data.token) {
-      //   Cookies.set('token', response.data.token);
-      //   Cookies.set('email', email);
-      // }
+     
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data || 'Login failed');
@@ -42,11 +39,8 @@ export const verifyOtp = createAsyncThunk(
   async ({ email, otp }, { rejectWithValue }) => {
     try {
       const response = await axiosInstance.post('/hrms/verifyOtp', { email, otp });
-      // if (response.data.token) {
-      //   Cookies.set('token', response.data.token);
-      //   Cookies.set('email', email);
-      // }
-      console.log('OTP verification response:', response.data);
+    
+   
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data || 'OTP verification failed');

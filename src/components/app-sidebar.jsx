@@ -140,7 +140,8 @@ const navdata = [
   },
   {
     title: "Meeting",
-    url: "/meeting",
+    url: "#",
+    // url: "/meeting",
     icon: IconCalendarEvent,
     subItems: [
       {

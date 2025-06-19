@@ -1,30 +1,3 @@
-// // middleware/roleMiddleware.js
-// import { NextResponse } from 'next/server';
-
-// const rolePermissions = {
-//   '/dashboard': ['cpc', 'pc', 'teamlead', 'employee'],
-//   '/project': ['cpc', 'pc', 'employee'],
-//   '/task': ['cpc', 'pc', 'teamlead', 'employee'],
-//   '/client': ['cpc', 'pc'],
-//   '/bug': ['cpc', 'pc', 'employee'],
-// };
-
-// export function roleMiddleware(req) {
-//   const role = req.cookies.get('role')?.value; // You can switch to session/jwt
-//   const path = req.nextUrl.pathname;
-
-//   const allowedRoles = rolePermissions[path] || [];
-
-//   if (!allowedRoles.includes(role)) {
-//     return NextResponse.redirect(new URL('/unauthorized', req.url));
-//   }
-
-//   return NextResponse.next();
-// }
-
-
-
-
 
 import { NextResponse } from 'next/server';
 import { rolePermissions } from '@/lib/rolePermissions';
