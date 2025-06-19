@@ -18,7 +18,7 @@ const buttonVariants = cva(
           'cursor-pointer bg-secondary text-secondary-foreground hover:bg-secondary/80',
         ghost: 'cursor-pointer hover:bg-accent hover:text-accent-foreground',
         link: 'cursor-pointer text-primary underline-offset-4 hover:underline',
-        back: 'cursor-pointer text-primary underline-offset-4 hover:underline inline-flex items-center gap-2 rounded-xl border border-green-600 bg-white px-4 py-2 text-green-700 font-semibold shadow-sm transition-all duration-200 hover:bg-green-400 hover:text-white focus:outline-none focus:ring-2 focus:ring-green-500',
+        back: 'cursor-pointer text-primary underline-offset-4 inline-flex items-center gap-2 rounded-xl border border-green-600 bg-white px-4 py-2 text-green-700 font-semibold shadow-sm transition-all duration-200 hover:bg-green-400 hover:text-white focus:outline-none focus:ring-2 focus:ring-green-500',
         save: 'cursor-pointer text-primary underline-offset-4 hover:underline',
         delete: 'cursor-pointer text-primary underline-offset-4 hover:underline',
       },

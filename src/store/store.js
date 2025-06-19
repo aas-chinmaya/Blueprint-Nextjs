@@ -20,6 +20,7 @@ import dashReducer from './features/dashSlice';
 import meetingReducer from './features/meetingSlice';
 import contactReducer from './features/contactSlice';
 import teamReducer from './features/teamSlice';
+import momReducer from './features/momSlice';
 
 const rootReducer = combineReducers({
   auth: authReducer,
@@ -43,6 +44,7 @@ const rootReducer = combineReducers({
   meetings: meetingReducer,
   contact: contactReducer,
   team: teamReducer,
+  mom: momReducer,
 });
 
 const store = configureStore({

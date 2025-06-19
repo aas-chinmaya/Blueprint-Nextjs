@@ -38,7 +38,7 @@
 //   },
 //   {
 //     title: "Meeting",
-//     url: "/meeting",
+//     url: "/meetings",
 //     icon: IconCalendarEvent,
 //   },
 //   {
@@ -145,16 +145,13 @@ const navdata = [
     subItems: [
       {
         title: "All Meetings",
-        url: "/meeting/all",
+        url: "/meetings/all",
       },
       {
         title: "Scheduled",
-        url: "/meeting/scheduled",
+        url: "/meetings/scheduled",
       },
-      {
-        title: "Completed",
-        url: "/meeting/completed",
-      },
+     
     ],
   },
   {
