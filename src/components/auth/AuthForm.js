@@ -110,7 +110,8 @@ const Login = () => {
     try {
       const response = await dispatch(
         verifyOtp({ email, otp: otpValue })
-      ).unwrap();
+      ).unwrap(); 
+      
       if (response.message === "Login successful") {
         toast.success("Login successful!...");
         setMode("login");
@@ -253,7 +254,7 @@ const Login = () => {
                 Welcome Back! 
               </CardTitle>
               <p className="text-gray-700 mt-3 text-lg font-medium">
-                Step into your green sanctuary of productivity! 🚀
+                Step into your  productivity! 🚀
               </p>
             </CardHeader>
             
@@ -351,7 +352,7 @@ const Login = () => {
                 <Shield size={32} className="drop-shadow-lg" />
               </div>
               <CardTitle className="text-3xl font-black bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 bg-clip-text text-transparent">
-                Green Security Check! 🔐
+                 Security Check! 🔐
               </CardTitle>
               <p className="text-gray-700 mt-3 leading-relaxed">
                 We sent a fresh otp to{" "}

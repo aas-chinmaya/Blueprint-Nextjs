@@ -1,10 +1,9 @@
 "use client";
-import { SectionCards } from "@/components/dashboard2/section-cards";
-import { ChartAreaInteractive } from "@/components/dashboard2/chart-area-interactive";
+import { SectionCardEmployee } from "@/components/dashboard2/section-cards";
+import {  ChartAreaInteractiveEmployee } from "@/components/dashboard2/chart-area-interactive";
 import { DataTable } from "@/components/dashboard2/data-table";
-import data from "./data.json";
+
 import { useEffect } from "react";
-import { Chart } from "@/components/ui/chart";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchAllProjects } from "@/store/features/fetchallProjectsSlice";
 import { getAllTaskList } from "@/store/features/TaskSlice";
@@ -32,11 +31,12 @@ const { allTaskList } = useSelector((state) => state.task);
   console.log("All Tasks:", allTaskList);
   return (
     <>
-      <SectionCards />
+    
+      <SectionCardEmployee />
       <div className="px-4 lg:px-6">
-        <ChartAreaInteractive />
+        <ChartAreaInteractiveEmployee />
       </div>
-      <DataTable data={data} />
+      <DataTable  />
     </>
   );
 }

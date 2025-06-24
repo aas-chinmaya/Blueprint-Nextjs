@@ -15,6 +15,18 @@ export const getAllContacts = createAsyncThunk(
     }
   }
 );
+// Thunk: Get all contacts
+export const getAllApprovedContacts = createAsyncThunk(
+  'contact/geApprovedContacts',
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await axiosInstance.get('/contact/approved');
+      return response.data.contacts;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || 'Failed to fetch contacts');
+    }
+  }
+);
 
 // Thunk: Get contact by ID
 export const getContactById = createAsyncThunk(
@@ -60,6 +72,7 @@ export const updateContactStatus = createAsyncThunk(
 // Initial State
 const initialState = {
   contacts: [],
+  Approvedcontacts: [],
   selectedContact: null,
   status: 'idle',
   error: null,
@@ -86,6 +99,19 @@ const contactSlice = createSlice({
         state.contacts = action.payload;
       })
       .addCase(getAllContacts.rejected, (state, action) => {
+        state.status = 'failed';
+        state.error = action.payload;
+      })
+      // Get All approvedContacts
+      .addCase(getAllApprovedContacts.pending, (state) => {
+        state.status = 'loading';
+        state.error = null;
+      })
+      .addCase(getAllApprovedContacts.fulfilled, (state, action) => {
+        state.status = 'succeeded';
+        state.Approvedcontacts = action.payload;
+      })
+      .addCase(getAllApprovedContacts.rejected, (state, action) => {
         state.status = 'failed';
         state.error = action.payload;
       })

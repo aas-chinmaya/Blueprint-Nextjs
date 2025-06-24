@@ -1,4 +1,4 @@
-import ContactMeetingsManager from "@/components/meetings/ContactMeetingsManager";
+import Service from "@/components/masters/ServiceMaster";
 
 
 export default function Page() {
@@ -6,7 +6,7 @@ export default function Page() {
     <>
       <div className="px-4 lg:px-6">
 
-     <ContactMeetingsManager/>
+<Service/>
       </div>
     </>
   );

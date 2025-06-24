@@ -1,112 +1,9 @@
-// "use client";
-
-// import Image from "next/image";
-// import Link from "next/link";
-// import * as React from "react";
-
-// import { NavMain } from "@/components/nav-main";
-// import {
-//   Sidebar,
-//   SidebarContent,
-//   SidebarHeader,
-//   SidebarMenu,
-//   SidebarMenuButton,
-//   SidebarMenuItem,
-// } from "@/components/ui/sidebar";
-// import {
-//   IconDashboard,
-//   IconPhoneCall,
-//   IconCalendarEvent,
-//   IconUser,
-//   IconFolder,
-//   IconChecklist,
-//   IconUsers,
-//   IconBug,
-//   IconReportAnalytics,
-// } from "@tabler/icons-react";
-
-// const navdata = [
-//   {
-//     title: "Dashboard",
-//     url: "/dashboard",
-//     icon: IconDashboard,
-//   },
-//   {
-//     title: "Contact",
-//     url: "/contact",
-//     icon: IconPhoneCall,
-//   },
-//   {
-//     title: "Meeting",
-//     url: "/meetings",
-//     icon: IconCalendarEvent,
-//   },
-//   {
-//     title: "Client",
-//     url: "/client",
-//     icon: IconUser,
-//   },
-//   {
-//     title: "Project",
-//     url: "/project",
-//     icon: IconFolder,
-//   },
-//   {
-//     title: "Task",
-//     url: "/task",
-//     icon: IconChecklist,
-//   },
-//   {
-//     title: "Team",
-//     url: "/team",
-//     icon: IconUsers,
-//   },
-//   // {
-//   //   title: "Bug",
-//   //   url: "/bug",
-//   //   icon: IconBug,
-//   // },
-//   // {
-//   //   title: "Report",
-//   //   url: "/report",
-//   //   icon: IconReportAnalytics,
-//   // },
-// ];
-
-
-// export function AppSidebar({ ...props }) {
-//   return (
-//     <Sidebar collapsible="offcanvas" {...props}>
-//       <SidebarHeader>
-//         <SidebarMenu>
-          
-//                 <div className="flex items-center space-x-2 ">
-//                   <Image
-//                     src="/logo.png" // make sure logo is optimized & inside public folder
-//                     alt="AAS BluePrint Logo"
-//                     width={60}
-//                     height={60}
-//                     className="rounded-sm"
-//                     priority
-//                     quality={100}
-//                   />
-//                   <span className="text-base font-semibold ">BluePrint</span>
-//                 </div>
-//         </SidebarMenu>
-//       </SidebarHeader>
-//       <SidebarContent>
-//         <NavMain items={navdata} />
-//       </SidebarContent>
-//     </Sidebar>
-//   );
-// }
-
-
 
 "use client";
 
 import Image from "next/image";
 import React from "react";
+import { useSelector } from "react-redux"; // ⬅️ for accessing Redux state
 
 import { NavMain } from "@/components/nav-main";
 import {
@@ -127,7 +24,8 @@ import {
   IconReportAnalytics,
 } from "@tabler/icons-react";
 
-const navdata = [
+// Full nav config
+const fullNavData = [
   {
     title: "Dashboard",
     url: "/dashboard",
@@ -141,7 +39,6 @@ const navdata = [
   {
     title: "Meeting",
     url: "#",
-    // url: "/meeting",
     icon: IconCalendarEvent,
     subItems: [
       {
@@ -149,10 +46,32 @@ const navdata = [
         url: "/meetings/all",
       },
       {
+        title: "Calendar",
+        url: "/meetings/calendar",
+      },
+      {
         title: "Scheduled",
         url: "/meetings/scheduled",
       },
-     
+    ],
+  },
+  {
+    title: "Master",
+    url: "#",
+    icon: IconCalendarEvent,
+    subItems: [
+      {
+        title: "Service",
+        url: "/master/services",
+      },
+      {
+        title: "Industry",
+        url: "/master/industry",
+      },
+      {
+        title: "Meeting Slots",
+        url: "/master/slots",
+      },
     ],
   },
   {
@@ -175,6 +94,7 @@ const navdata = [
     url: "/team",
     icon: IconUsers,
   },
+  // Optional future sections:
   // {
   //   title: "Bug",
   //   url: "/bug",
@@ -188,13 +108,24 @@ const navdata = [
 ];
 
 export function AppSidebar(props) {
+  const { employeeData } = useSelector((state) => state.user) || {};
+  const userRole = employeeData?.designation;
+
+  // Role-based filtering
+  const navdata =
+    userRole === "cpc"
+      ? fullNavData
+      : fullNavData.filter((item) =>
+          ["Dashboard", "Project", "Task", "Team"].includes(item.title)
+        );
+
   return (
     <Sidebar collapsible="offcanvas" {...props}>
       <SidebarHeader>
         <SidebarMenu>
           <div className="flex items-center space-x-2">
             <Image
-              src="/logo.png" // make sure logo is optimized & inside public folder
+              src="/logo.png"
               alt="AAS BluePrint Logo"
               width={60}
               height={60}

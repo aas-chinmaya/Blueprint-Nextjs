@@ -1,4 +1,4 @@
-import ContactMeetingsManager from "@/components/meetings/ContactMeetingsManager";
+import SlotMaster from "@/components/masters/SlotMaster";
 
 
 export default function Page() {
@@ -6,7 +6,7 @@ export default function Page() {
     <>
       <div className="px-4 lg:px-6">
 
-     <ContactMeetingsManager/>
+<SlotMaster/>
       </div>
     </>
   );

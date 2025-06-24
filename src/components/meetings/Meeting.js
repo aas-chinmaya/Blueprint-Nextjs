@@ -36,7 +36,7 @@ import {
   TableCell,
 } from "@/components/ui/table";
 import Loader from "@/components/ui/loader";
-import CodeVerificationModal from "./MeetcodeModal";
+import CodeVerificationModal from "./meeting/MeetcodeModal";
 import {
   fetchMeetings,
   createMeeting,
@@ -100,6 +100,9 @@ function getInitials(email) {
     .slice(0, 2)
     .join("");
 };
+
+
+
 
 // Inline Meeting Form component
 function MeetingForm({
@@ -251,6 +254,7 @@ function MeetingForm({
     </div>
   );
 }
+
 
 // Inline Meeting Details component
 function MeetingDetails({ meeting, onClose }) {
@@ -406,6 +410,7 @@ export default function Meeting() {
   const handleCreate = async (newMeeting) => {
     try {
       const response = await dispatch(createMeeting(newMeeting));
+      console.log("✅ Meeting created successfully:", response);
       if (response.payload && response.payload.message === "User not authorized") {
         setVerificationUrl(response.payload.url);
         setModalOpen(true);
@@ -741,3 +746,8 @@ export default function Meeting() {
     </div>
   );
 }
+
+
+
+
+

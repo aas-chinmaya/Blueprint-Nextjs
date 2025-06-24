@@ -21,7 +21,11 @@ import meetingReducer from './features/meetingSlice';
 import contactReducer from './features/contactSlice';
 import teamReducer from './features/teamSlice';
 import momReducer from './features/momSlice';
+import slotReducer from './features/master/slotMasterSlice';
+// import slotReducer from './features/calender/slotSlice';
+import meetingCalendarReducer from './features/calender/meetingCalendarSlice';
 
+import serviceReducer from './features/master/serviceMasterSlice';
 const rootReducer = combineReducers({
   auth: authReducer,
   sidebar: sidebarReducer,
@@ -45,6 +49,17 @@ const rootReducer = combineReducers({
   contact: contactReducer,
   team: teamReducer,
   mom: momReducer,
+
+
+  slots: slotReducer,
+  meetingCalendar: meetingCalendarReducer,
+
+
+
+  //master
+    slots: slotReducer,
+    services: serviceReducer,
+
 });
 
 const store = configureStore({

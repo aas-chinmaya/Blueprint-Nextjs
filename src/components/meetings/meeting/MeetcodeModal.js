@@ -18,7 +18,6 @@ export default function CodeVerificationModal({
 
     window.open(verificationUrl, "_blank");
   };
-
   const handleVerifyCode = async () => {
     if (!codeInput) {
       alert("❌ Please enter the code.");

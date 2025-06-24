@@ -25,9 +25,9 @@ export const createMeeting = createAsyncThunk(
       // console.log("User not authorized",response.data);
       return response.data;
     } catch (error) {
-       console.log("Error in createMeeting:", error.response?.url );
+      //  console.log("Error in createMeeting:", error.response?.url );
 
-      return rejectWithValue(error.response?.url || 'Failed to create meeting');
+      return rejectWithValue(error);
     }
   }
 );
@@ -38,6 +38,7 @@ export const updateMeeting = createAsyncThunk(
   async ( meetingData , { rejectWithValue }) => {
     try {
       const response = await axiosInstance3.post(`/meeting/update`, meetingData);
+      console.log(response)
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || 'Failed to update meeting');

@@ -266,7 +266,7 @@ export const getAllTaskByEmployeeId = createAsyncThunk(
         throw new Error('No tasks found for the employee');
       }
 
-      return response.data;
+      return response.data.data;
     } catch (error) {
       console.error('Get Tasks By Employee ID Error:', error);
       if (error.code === 'ECONNABORTED') {

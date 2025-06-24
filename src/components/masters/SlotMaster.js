@@ -1,0 +1,310 @@
+
+'use client';
+
+import React, { useEffect, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import {
+  fetchAllSlots,
+  createSlot,
+  deleteSlot,
+} from '@/store/features/master/slotMasterSlice';
+import { PlusCircle, Clock, Trash2, AlertCircle } from 'lucide-react';
+
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+} from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Dialog,
+  DialogTrigger,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { toast } from '@/components/ui/use-toast';
+
+export default function SlotMaster() {
+  
+  const dispatch = useDispatch();
+  const { slots, loading, error } = useSelector((state) => state.slots);
+
+  const [openCreate, setOpenCreate] = useState(false);
+  const [openDelete, setOpenDelete] = useState(false);
+  const [startTime, setStartTime] = useState('');
+  const [endTime, setEndTime] = useState('');
+  const [shift, setShift] = useState('');
+  const [slotToDelete, setSlotToDelete] = useState(null);
+
+  // Fetch slots on component mount
+  useEffect(() => {
+    dispatch(fetchAllSlots());
+  }, [dispatch]);
+
+  // Automatically set shift based on startTime
+  useEffect(() => {
+    if (startTime) {
+      const [hours] = startTime.split(':').map(Number);
+      if (hours >= 0 && hours < 12) {
+        setShift('Morning');
+      } else if (hours >= 12 && hours < 16) {
+        setShift('Day');
+      } else if (hours >= 16 && hours < 20) {
+        setShift('Afternoon');
+      } else {
+        setShift('Evening');
+      }
+    } else {
+      setShift('');
+    }
+  }, [startTime]);
+
+  // Calculate statistics
+  const stats = slots.reduce(
+    (acc, slot) => {
+      acc[slot.shift] = (acc[slot.shift] || 0) + 1;
+      return acc;
+    },
+    { Morning: 0, Day: 0, Afternoon: 0, Evening: 0 }
+  );
+
+  // Handle slot creation
+  const handleCreate = () => {
+    if (!startTime || !endTime || !shift) {
+      toast.error('All fields are required');
+      return;
+    }
+
+    dispatch(createSlot({ startTime, endTime, shift }))
+      .unwrap()
+      .then(() => {
+        toast.success('Slot created!');
+        setStartTime('');
+        setEndTime('');
+        setShift('');
+        setOpenCreate(false);
+      })
+      .catch((err) => toast.error(err));
+  };
+
+  // Handle opening delete confirmation
+  const handleOpenDelete = (slotNo) => {
+    setSlotToDelete(slotNo);
+    setOpenDelete(true);
+  };
+
+  // Handle slot deletion
+  const handleDelete = () => {
+    if (slotToDelete) {
+      dispatch(deleteSlot(slotToDelete))
+        .unwrap()
+        .then(() => {
+          toast.success('Slot deleted!');
+          setOpenDelete(false);
+          setSlotToDelete(null);
+        })
+        .catch((err) => toast.error(err));
+    }
+  };
+
+  return (
+    <div className="">
+      <Card className=" mx-auto shadow-xl border-0">
+        {/* Header */}
+        <CardHeader className="bg-gradient-to-r from-green-600 to-teal-600 text-white rounded-t-lg">
+          <div className="flex justify-between items-center">
+            <div className="flex items-center gap-2">
+              <Clock className="w-6 h-6" />
+              <CardTitle className="text-2xl">Slot Master</CardTitle>
+            </div>
+            <Dialog open={openCreate} onOpenChange={setOpenCreate}>
+              <DialogTrigger asChild>
+                <Button className="bg-white text-green-600 hover:bg-gray-100 flex items-center gap-2">
+                  <PlusCircle className="w-5 h-5" />
+                  Create Slot
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                  <DialogTitle className="flex items-center gap-2 text-green-700">
+                    <Clock className="w-5 h-5" />
+                    Create New Slot
+                  </DialogTitle>
+                  <DialogDescription>
+                    Enter the time details for the new slot. Shift will be set automatically.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="startTime" className="text-green-700">
+                      Start Time
+                    </Label>
+                    <Input
+                      id="startTime"
+                      type="time"
+                      value={startTime}
+                      onChange={(e) => setStartTime(e.target.value)}
+                      className="border-green-400 focus:ring-green-500"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="endTime" className="text-green-700">
+                      End Time
+                    </Label>
+                    <Input
+                      id="endTime"
+                      type="time"
+                      value={endTime}
+                      onChange={(e) => setEndTime(e.target.value)}
+                      className="border-green-400 focus:ring-green-500"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="shift" className="text-green-700">
+                      Shift
+                    </Label>
+                    <Select value={shift} onValueChange={setShift} disabled>
+                      <SelectTrigger className="border-green-400 focus:ring-green-500">
+                        <SelectValue placeholder="Select Shift" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Morning">Morning</SelectItem>
+                        <SelectItem value="Day">Day</SelectItem>
+                        <SelectItem value="Afternoon">Afternoon</SelectItem>
+                        <SelectItem value="Evening">Evening</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button
+                    variant="outline"
+                    onClick={() => setOpenCreate(false)}
+                    className="text-gray-600 hover:bg-gray-100"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={handleCreate}
+                    className="bg-green-600 hover:bg-green-700 text-white"
+                  >
+                    Save Slot
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </div>
+        </CardHeader>
+
+        {/* Content */}
+        <CardContent className="p-6 space-y-6">
+          {/* Statistics */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {['Morning', 'Day', 'Afternoon', 'Evening'].map((shift) => (
+              <Card
+                key={shift}
+                className="bg-gradient-to-br from-green-50 to-teal-50 border-green-200 shadow-sm"
+              >
+                <CardContent className="p-4">
+                  <h3 className="text-sm font-medium text-gray-600">{shift}</h3>
+                  <p className="text-2xl font-bold text-green-600">{stats[shift]}</p>
+                  <p className="text-xs text-gray-500">Total Slots</p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          {/* Slots List */}
+          <div className="border-t border-gray-200 pt-4">
+            <h2 className="text-lg font-semibold text-green-700 mb-4">All Slots</h2>
+            {loading ? (
+              <p className="text-gray-500">Loading...</p>
+            ) : error ? (
+              <p className="text-red-600">{error}</p>
+            ) : slots.length === 0 ? (
+              <p className="text-gray-500 italic">No slots available.</p>
+            ) : (
+              <div className="space-y-3">
+                {slots.map((slot) => (
+                  <Card
+                    key={slot._id}
+                    className="bg-green-50 border-green-200 hover:bg-green-100 transition"
+                  >
+                    <CardContent className="flex items-center justify-between p-4">
+                      <div className="flex flex-col">
+                        <span className="font-semibold text-green-700">
+                          Slot #{slot.slotNo}: {slot.startTime} - {slot.endTime}
+                        </span>
+                        <span className="text-sm text-gray-600">{slot.shift}</span>
+                        <span className="text-xs text-gray-400">
+                          Created: {new Date(slot.createdAt).toLocaleString()}
+                        </span>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleOpenDelete(slot.slotNo)}
+                        className="hover:bg-red-100"
+                      >
+                        <Trash2 className="w-5 h-5 text-red-600" />
+                      </Button>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={openDelete} onOpenChange={(open) => {
+        setOpenDelete(open);
+        if (!open) setSlotToDelete(null);
+      }}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-red-700">
+              <AlertCircle className="w-6 h-6" />
+              Confirm Deletion
+            </DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete Slot #{slotToDelete}? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setOpenDelete(false);
+                setSlotToDelete(null);
+              }}
+              className="text-gray-600 hover:bg-gray-100"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleDelete}
+              className="bg-red-600 hover:bg-red-700 text-white"
+            >
+              Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}

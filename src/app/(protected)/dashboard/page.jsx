@@ -1,38 +1,33 @@
-'use client';
+"use client";
 
-import CpcDashboard from '@/components/dashboard2/dashboardcontainer/CpcDashboard';
-import EmployeeDashboard from '@/components/dashboard2/dashboardcontainer/EmployeeDashboard';
-import { useState } from 'react';
+import CpcDashboard from "@/components/dashboard2/dashboardcontainer/CpcDashboard";
+import EmployeeDashboard from "@/components/dashboard2/dashboardcontainer/EmployeeDashboard";
+import { useState } from "react";
 
 import { useDispatch, useSelector } from "react-redux";
 
-
-
-
-
 export default function page() {
-      const { userData, employeeData, loading: userLoading } = useSelector(state => state.user) || {};
+  const {
+    userData,
+    employeeData,
+    loading: userLoading,
+  } = useSelector((state) => state.user) || {};
 
+  const currentUser = {
+    // role: "employee", // Change to 'employee' or 'team_lead' for testing
+    role: employeeData?.designation, // Change to 'employee' or 'team_lead' for testing
+    name: employeeData?.name,
+  };
 
-const currentUser = {
-  // role: "employee", // Change to 'employee' or 'team_lead' for testing
-  role: employeeData?.designation, // Change to 'employee' or 'team_lead' for testing
-  name: employeeData?.name,
-  teamLeadId: 'TL001', // Set to null for employees without team lead role
-};
+  console.log("employeeData:", employeeData);
+
   return (
     <>
       {currentUser.role === "cpc" ? (
-        <CpcDashboard  currentUser={currentUser} />
+        <CpcDashboard currentUser={currentUser} />
       ) : (
-        <EmployeeDashboard  currentUser={currentUser} />
+        <EmployeeDashboard currentUser={currentUser} />
       )}
     </>
   );
 }
-
-
-
-
-
-

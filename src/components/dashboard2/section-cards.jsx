@@ -1,7 +1,5 @@
-
-
-import { IconTrendingDown, IconTrendingUp } from "@tabler/icons-react"
-import { Badge } from "@/components/ui/badge"
+import { IconTrendingDown, IconTrendingUp } from "@tabler/icons-react";
+import { Badge } from "@/components/ui/badge";
 import {
   Card,
   CardAction,
@@ -9,11 +7,14 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card"
+} from "@/components/ui/card";
 import { useEffect, useMemo, useCallback, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchAllProjects } from "@/store/features/fetchallProjectsSlice";
-import { getAllTaskList } from "@/store/features/TaskSlice";
+import { fetchAllProjects, fetchProjectsByEmployeeId } from "@/store/features/fetchallProjectsSlice";
+import {
+  getAllTaskList,
+  getAllTaskByEmployeeId,
+} from "@/store/features/TaskSlice";
 import { fetchClients } from "@/store/features/projectonboardingSlice";
 
 // Skeleton Component for Cards
@@ -43,7 +44,8 @@ const CardSkeleton = () => (
 
 export function SectionCards() {
   const dispatch = useDispatch();
-  
+  const { userData, employeeData, loading: userLoading } = useSelector(state => state.user) || {};
+
   // Local state to track which cards are loaded
   const [loadedCards, setLoadedCards] = useState({
     projects: false,
@@ -51,16 +53,15 @@ export function SectionCards() {
     tasks: false,
     growth: true // Static card, always loaded
   });
- 
+
   const { projects, status, error } = useSelector(
     (state) => state.fetchallProjects
   );
-  
-  const { userData, employeeData, loading: userLoading } = useSelector(state => state.user) || {};
-  
+
+
   const { clients, loading: clientsLoading, onboardingError } = useSelector((state) => state.projectOnboarding);
-  
-  const { allTaskList, status: taskStatus } = useSelector((state) => state.task);
+
+  const { allTaskList, employeeTasks,status: taskStatus } = useSelector((state) => state.task);
 
   // Memoize current user to prevent unnecessary re-renders
   const currentUser = useMemo(() => ({
@@ -79,7 +80,7 @@ export function SectionCards() {
   const fetchAllData = useCallback(async () => {
     try {
       const promises = [];
-      
+
       // Priority fetch for clients (fastest loading)
       if (!clients || (Array.isArray(clients) && clients.length === 0) || clientsLoading === false) {
         promises.push(dispatch(fetchClients()).unwrap().catch(err => {
@@ -87,7 +88,7 @@ export function SectionCards() {
           return [];
         }));
       }
-      
+
       // Other API calls
       if (status === 'idle' || !projects) {
         promises.push(dispatch(fetchAllProjects()).unwrap().catch(err => {
@@ -125,7 +126,7 @@ export function SectionCards() {
   // Optimized loading states with fallbacks
   const isProjectsLoading = status === "loading" || !loadedCards.projects;
   const isTasksLoading = taskStatus === "loading" || !loadedCards.tasks;
-  
+
   // Enhanced clients loading with timeout fallback
   const isClientsLoading = useMemo(() => {
     // If clients data exists, show it immediately
@@ -143,7 +144,7 @@ export function SectionCards() {
     ) : (
       <Card className="@container/card">
         <CardHeader>
-          <CardDescription>Total Project</CardDescription>
+          <CardDescription>Total Project </CardDescription>
           <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
             {counts.projects}
           </CardTitle>
@@ -170,7 +171,7 @@ export function SectionCards() {
     // Show clients card immediately if data exists
     const clientCount = Array.isArray(clients) ? clients.length : 0;
     const hasClientsData = clients !== null && clients !== undefined;
-    
+
     return (
       isClientsLoading && !hasClientsData ? (
         <CardSkeleton />
@@ -261,3 +262,177 @@ export function SectionCards() {
     </div>
   );
 }
+export function SectionCardEmployee() {
+  const dispatch = useDispatch();
+ const { userData, employeeData, loading: userLoading } = useSelector(state => state.user) || {};
+
+  // Local state to track which cards are loaded
+  const [loadedCards, setLoadedCards] = useState({
+    projects: false,
+    clients: false,
+    tasks: false,
+    growth: true // Static card, always loaded
+  });
+
+  const { employeeProjects, status, error } = useSelector(
+    (state) => state.fetchallProjects
+  );
+
+
+
+  const {employeeTasks,status: taskStatus } = useSelector((state) => state.task);
+
+  // Memoize current user to prevent unnecessary re-renders
+  const currentUser = {
+    role: employeeData?.designation,
+    name: employeeData?.name,
+    employeeId: employeeData?.employeeID,
+  };
+const employeeId= currentUser.employeeId; 
+  // Memoize data counts to prevent recalculation
+  const counts = useMemo(() => ({
+    employeeProjects: employeeProjects?.length || 0,
+    tasks: employeeTasks?.length || 0
+  }), [employeeProjects?.length, employeeTasks?.length]);
+
+  // Optimized data fetching with priority for clients
+  const fetchAllData = useCallback(async () => {
+    try {
+      const promises = [];
+
+  
+
+      // Other API calls
+      if (status === 'idle' || !employeeProjects) {
+        // Example employee ID, replace with dynamic value if needed
+        promises.push(dispatch(fetchProjectsByEmployeeId(employeeId)).unwrap().catch(err => {
+          console.error('Projects fetch error:', err);
+          return [];
+        }));
+      }
+      if (taskStatus === 'idle' || !employeeTasks) {
+        promises.push(dispatch(getAllTaskByEmployeeId(employeeId)).unwrap().catch(err => {
+          console.error('Tasks fetch error:', err);
+          return [];
+        }));
+      }
+
+      await Promise.allSettled(promises);
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    }
+  }, [dispatch, status, taskStatus, employeeProjects, employeeTasks,currentUser.employeeId]);
+
+  useEffect(() => {
+    fetchAllData();
+  }, [fetchAllData]);
+
+  // Update loaded state when data arrives
+  useEffect(() => {
+    setLoadedCards(prev => ({
+      ...prev,
+      employeeProjects: status === 'succeeded' && employeeProjects !== null,
+      tasks: taskStatus === 'succeeded' && employeeTasks !== null,
+    }));
+  }, [status, taskStatus, employeeProjects, employeeTasks]);
+
+  // Optimized loading states with fallbacks
+  const isProjectsLoading = status === "loading" || !loadedCards.employeeProjects;
+  const isTasksLoading = taskStatus === "loading" || !loadedCards.tasks;
+
+
+  // Individual card components to reduce re-renders
+  const ProjectsCards = useMemo(() => (
+    isProjectsLoading ? (
+      <CardSkeleton />
+    ) : (
+      <Card className="@container/card">
+        <CardHeader>
+          <CardDescription>Total Project I Worked</CardDescription>
+          <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
+            {counts.employeeProjects}
+          </CardTitle>
+          <CardAction>
+            <Badge variant="outline">
+              <IconTrendingUp />
+              +12.5%
+            </Badge>
+          </CardAction>
+        </CardHeader>
+        <CardFooter className="flex-col items-start gap-1.5 text-sm">
+          <div className="line-clamp-1 flex gap-2 font-medium">
+            Trending up this month <IconTrendingUp className="size-4" />
+          </div>
+          <div className="text-muted-foreground">
+            Visitors for the last 6 months
+          </div>
+        </CardFooter>
+      </Card>
+    )
+  ), [isProjectsLoading, counts.employeeProjects]);
+
+
+  const TasksCards = useMemo(() => (
+    isTasksLoading ? (
+      <CardSkeleton />
+    ) : (
+      <Card className="@container/card">
+        <CardHeader>
+          <CardDescription>My Tasks</CardDescription>
+          <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
+            {counts.tasks}
+          </CardTitle>
+          <CardAction>
+            <Badge variant="outline">
+              <IconTrendingUp />
+              +12.5%
+            </Badge>
+          </CardAction>
+        </CardHeader>
+        <CardFooter className="flex-col items-start gap-1.5 text-sm">
+          <div className="line-clamp-1 flex gap-2 font-medium">
+            Strong user retention <IconTrendingUp className="size-4" />
+          </div>
+          <div className="text-muted-foreground">Engagement exceed targets</div>
+        </CardFooter>
+      </Card>
+    )
+  ), [isTasksLoading, counts.tasks]);
+
+  // Static card doesn't need memoization but keeping for consistency
+  const GrowthCards = useMemo(() => (
+    <Card className="@container/card">
+      <CardHeader>
+        <CardDescription>Growth Rate</CardDescription>
+        <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
+          4.5%
+        </CardTitle>
+        <CardAction>
+          <Badge variant="outline">
+            <IconTrendingUp />
+            +4.5%
+          </Badge>
+        </CardAction>
+      </CardHeader>
+      <CardFooter className="flex-col items-start gap-1.5 text-sm">
+        <div className="line-clamp-1 flex gap-2 font-medium">
+          Steady performance increase <IconTrendingUp className="size-4" />
+        </div>
+        <div className="text-muted-foreground">Meets growth projections</div>
+      </CardFooter>
+    </Card>
+  ), []);
+
+  return (
+ <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 px-4 lg:px-6">
+  {ProjectsCards}
+  {TasksCards}
+  {GrowthCards}
+</div>
+
+  );
+}
+
+
+
+

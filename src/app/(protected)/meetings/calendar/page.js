@@ -1,12 +1,11 @@
-import Meeting from "@/components/meetings2/Meeting";
+import CalendarContainer from "@/components/meetings/calendar/CalendarConatiner";
 
 
 export default function Page() {
   return (
     <>
       <div className="px-4 lg:px-6">
-     <Meeting/>
-   
+<CalendarContainer/>
       </div>
     </>
   );
