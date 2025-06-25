@@ -68,7 +68,10 @@ import { toZonedTime } from "date-fns-tz";
 import CodeVerificationModal from "./MeetcodeModal";
 import { DialogDescription } from "@radix-ui/react-dialog";
 import { toast } from '@/components/ui/use-toast';
-import MoMDetailsModal from "../mom/MoMDetailsModal";
+import MeetingDetailsWithMOM from "../mom/MeetingDetailsWithMOM";
+import { fetchMoM } from '@/store/features/momSlice';
+import { TooltipContent, TooltipProvider, TooltipTrigger } from "@radix-ui/react-tooltip";
+import { Tooltip } from "recharts";
 
 // Utility functions with Asia/Kolkata time zone
 const TIME_ZONE = "Asia/Kolkata";
@@ -198,7 +201,8 @@ function MeetingForm({ meeting = {}, onSave, onCancel, isEditing = false, loadin
       date: format(toZonedTime(selectedDate, TIME_ZONE), "yyyy-MM-dd", {
         timeZone: TIME_ZONE,
       }),
-      selectedSlot: { ...formData.selectedSlot },
+      selectedSlot: {   startTime: formData.selectedSlot.startTime,
+      endTime: formData.selectedSlot.endTime, },
     };
 
     onSave(payload);
@@ -427,7 +431,7 @@ function MeetingDetails({ meeting, onClose }) {
 };
 
 // MeetingsPage Component
-function MeetingsPage  ({ id })  {
+function MeetingsPage({ id }) {
   const dispatch = useDispatch();
   const contactId = id;
   const {
@@ -441,29 +445,20 @@ function MeetingsPage  ({ id })  {
   } = useSelector((state) => state.meetings);
   const { slots, loading: slotsLoading } = useSelector((state) => state.slots);
   const [isModalOpen, setModalOpen] = useState(false);
-  const [verificationUrl, setVerificationUrl] = useState("");
+  const [verificationUrl, setVerificationUrl] = useState('');
   const [meetingsData, setMeetingsData] = useState([]);
   const [selectedMeeting, setSelectedMeeting] = useState(null);
   const [modals, setModals] = useState({
     isCreateOpen: false,
     isEditOpen: false,
     isViewOpen: false,
-    isCreateMomOpen: false,
-    isEditMomOpen: false,
     isDeleteConfirmOpen: false,
+    isViewMomOpen: false,
   });
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState('');
   const [dateRange, setDateRange] = useState({ from: null, to: null });
-  const [momForm, setMomForm] = useState({
-    id: "",
-    summary: "",
-    actionItems: [{ task: "", assignee: "", dueDate: "" }],
-    decisions: [""],
-    recordedBy: "",
-    recordedDate: format(new Date(), "yyyy-MM-dd", { timeZone: TIME_ZONE }),
-  });
-  const [selectedMom, setSelectedMom] = useState(null);
   const [meetingToDelete, setMeetingToDelete] = useState(null);
+  const TIME_ZONE = 'UTC'; // Adjust as needed
 
   useEffect(() => {
     if (contactId) {
@@ -475,11 +470,11 @@ function MeetingsPage  ({ id })  {
     if (contactMeetings.length > 0) {
       const mappedMeetings = contactMeetings.map((meeting) => ({
         meetingId: meeting.id,
-        title: meeting.summary || "Untitled",
+        title: meeting.summary || 'Untitled',
         date: meeting.start?.dateTime || new Date().toISOString(),
-        location: meeting.hangoutLink || "N/A",
-        attendees: meeting.attendees?.map((attendee) => attendee.email).join(", ") || "",
-        agenda: meeting.description || "",
+        location: meeting.hangoutLink || 'N/A',
+        attendees: meeting.attendees?.map((attendee) => attendee.email).join(', ') || '',
+        agenda: meeting.description || '',
         mom: meeting.mom || [],
         start: meeting.start,
         end: meeting.end,
@@ -493,24 +488,20 @@ function MeetingsPage  ({ id })  {
     }
   }, [contactMeetings]);
 
-  const generateId = (prefix) => {
-    return `${prefix}-${Math.random().toString(36).substr(2, 9)}`;
-  };
-
   const handleCreate = async (newMeeting) => {
     try {
       const response = await dispatch(createMeeting(newMeeting));
-      if (response.payload?.response?.data?.message === "User not authorized") {
+      if (response.payload?.response?.data?.message === 'User not authorized') {
         setVerificationUrl(response.payload.response.data.url);
         setModalOpen(true);
         setModals({ ...modals, isCreateOpen: false });
       } else {
         setModals({ ...modals, isCreateOpen: false });
-        toast.success("Meeting created successfully!");
+        toast.success('Meeting created successfully!');
       }
     } catch (error) {
-      toast.error("Failed to create meeting.");
-      console.error("Error creating meeting:", error);
+      toast.error('Failed to create meeting.');
+      console.error('Error creating meeting:', error);
     }
   };
 
@@ -519,10 +510,10 @@ function MeetingsPage  ({ id })  {
       await dispatch(updateMeeting({ meetingData: updatedMeeting }));
       setModals({ ...modals, isEditOpen: false });
       setSelectedMeeting(null);
-      toast.success("Meeting updated successfully!");
+      toast.success('Meeting updated successfully!');
     } catch (err) {
-      toast.error("Failed to update meeting.");
-      console.error("Error updating meeting:", err);
+      toast.error('Failed to update meeting.');
+      console.error('Error updating meeting:', err);
     }
   };
 
@@ -535,12 +526,12 @@ function MeetingsPage  ({ id })  {
     if (meetingToDelete) {
       try {
         await dispatch(
-          deleteMeeting({ id: meetingToDelete, email: "it_chinmaya@outlook.com" })
+          deleteMeeting({ id: meetingToDelete, email: 'it_chinmaya@outlook.com' })
         ).unwrap();
-        toast.success("Meeting deleted successfully!");
+        toast.success('Meeting deleted successfully!');
       } catch (err) {
-        toast.error("Failed to delete meeting.");
-        console.error("Error deleting meeting:", err);
+        toast.error('Failed to delete meeting.');
+        console.error('Error deleting meeting:', err);
       } finally {
         setModals({ ...modals, isDeleteConfirmOpen: false });
         setMeetingToDelete(null);
@@ -553,87 +544,9 @@ function MeetingsPage  ({ id })  {
     setModals({ ...modals, isViewOpen: true });
   };
 
-  const handleOpenCreateMom = (meeting) => {
+  const handleViewMom = (meeting) => {
     setSelectedMeeting(meeting);
-    setMomForm({
-      id: generateId("MOM"),
-      summary: "",
-      actionItems: [{ task: "", assignee: "", dueDate: "" }],
-      decisions: [""],
-      recordedBy: "",
-      recordedDate: format(new Date(), "yyyy-MM-dd", { timeZone: TIME_ZONE }),
-    });
-    setModals({ ...modals, isCreateMomOpen: true });
-  };
-
-  const handleOpenEditMom = (meeting, mom) => {
-    setSelectedMeeting(meeting);
-    setSelectedMom(mom);
-    setMomForm({
-      id: mom.id || "",
-      summary: mom.summary || "",
-      actionItems: mom.actionItems?.map((item) => ({ ...item })) || [
-        { task: "", assignee: "", dueDate: "" },
-      ],
-      decisions: mom.decisions?.length ? [...mom.decisions] : [""],
-      recordedBy: mom.recordedBy || "",
-      recordedDate: mom.recordedDate || format(new Date(), "yyyy-MM-dd", { timeZone: TIME_ZONE }),
-    });
-    setModals({ ...modals, isEditMomOpen: true });
-  };
-
-  const handleMomFormChange = (e, field, index = null) => {
-    if (field === "actionItems") {
-      const updatedActionItems = [...momForm.actionItems];
-      updatedActionItems[index][e.target.name] = e.target.value;
-      setMomForm({ ...momForm, actionItems: updatedActionItems });
-    } else if (field === "decisions") {
-      const updatedDecisions = [...momForm.decisions];
-      updatedDecisions[index] = e.target.value;
-      setMomForm({ ...momForm, decisions: updatedDecisions });
-    } else {
-      setMomForm({ ...momForm, [field]: e.target.value });
-    }
-  };
-
-  const addActionItem = () => {
-    setMomForm({
-      ...momForm,
-      actionItems: [...momForm.actionItems, { task: "", assignee: "", dueDate: "" }],
-    });
-  };
-
-  const addDecision = () => {
-    setMomForm({ ...momForm, decisions: [...momForm.decisions, ""] });
-  };
-
-  const handleMomSubmit = (isEdit = false) => {
-    const updatedMeetingsData = meetingsData.map((meeting) => {
-      if (meeting.meetingId === selectedMeeting.meetingId) {
-        if (isEdit) {
-          const updatedMom = meeting.mom.map((m) =>
-            m.id === momForm.id ? { ...momForm } : m
-          );
-          return { ...meeting, mom: updatedMom };
-        } else {
-          return { ...meeting, mom: [...meeting.mom, { ...momForm }] };
-        }
-      }
-      return meeting;
-    });
-
-    setMeetingsData(updatedMeetingsData);
-    setModals({ ...modals, isCreateMomOpen: false, isEditMomOpen: false });
-    setMomForm({
-      id: "",
-      summary: "",
-      actionItems: [{ task: "", assignee: "", dueDate: "" }],
-      decisions: [""],
-      recordedBy: "",
-      recordedDate: format(new Date(), "yyyy-MM-dd", { timeZone: TIME_ZONE }),
-    });
-    setSelectedMom(null);
-    toast.success(isEdit ? "MoM updated successfully!" : "MoM created successfully!");
+    setModals({ ...modals, isViewMomOpen: true });
   };
 
   const handleCloseModals = () => {
@@ -641,9 +554,8 @@ function MeetingsPage  ({ id })  {
       isCreateOpen: false,
       isEditOpen: false,
       isViewOpen: false,
-      isCreateMomOpen: false,
-      isEditMomOpen: false,
       isDeleteConfirmOpen: false,
+      isViewMomOpen: false,
     });
     setSelectedMeeting(null);
     dispatch(clearError());
@@ -653,13 +565,21 @@ function MeetingsPage  ({ id })  {
     setDateRange({ from: null, to: null });
   };
 
+  const formatDate = (date) => {
+    return date ? format(new Date(date), 'PPP') : 'N/A';
+  };
+
+  const formatTimes = (dateTime) => {
+    return dateTime ? format(new Date(dateTime), 'p') : 'N/A';
+  };
+
   const filteredMeetings = meetingsData.filter((meeting) => {
     const matchesSearch = meeting.title
       ?.toLowerCase()
       .includes(searchQuery.toLowerCase());
     const meetingDate = meeting.date
-      ? new Date(meeting.date).toISOString().split("T")[0]
-      : "";
+      ? new Date(meeting.date).toISOString().split('T')[0]
+      : '';
     const matchesDateRange =
       !dateRange.from ||
       !dateRange.to ||
@@ -714,8 +634,8 @@ function MeetingsPage  ({ id })  {
                   >
                     <CalendarIcon className="h-5 w-5 mr-2" />
                     {dateRange.from && dateRange.to
-                      ? `${format(dateRange.from, "PPP")} - ${format(dateRange.to, "PPP")}`
-                      : "Select Date Range"}
+                      ? `${format(dateRange.from, 'PPP')} - ${format(dateRange.to, 'PPP')}`
+                      : 'Select Date Range'}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="end">
@@ -785,13 +705,13 @@ function MeetingsPage  ({ id })  {
                             Join Meeting
                           </a>
                         ) : (
-                          "Online"
+                          'Online'
                         )}
                       </TableCell>
                       <TableCell className="text-green-700">
                         {meeting.attendees
-                          ? `${meeting.attendees.split(", ").length} attendees`
-                          : "None"}
+                          ? `${meeting.attendees.split(', ').length} attendees`
+                          : 'None'}
                       </TableCell>
                       <TableCell>
                         <div className="flex space-x-1">
@@ -826,8 +746,7 @@ function MeetingsPage  ({ id })  {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => handleOpenCreateMom(meeting)}
-                            disabled={meeting.mom?.length > 0}
+                            onClick={() => handleViewMom(meeting)}
                             className="text-green-600 hover:text-green-800 hover:bg-green-100"
                           >
                             <FileText className="h-4 w-4" />
@@ -883,290 +802,22 @@ function MeetingsPage  ({ id })  {
                 <DialogTitle className="text-green-800">Meeting Details</DialogTitle>
               </DialogHeader>
               {selectedMeeting && (
-                <>
-                  <MeetingDetails meeting={selectedMeeting} onClose={handleCloseModals} />
-                  {selectedMeeting.mom?.length > 0 && (
-                    <div className="mt-6 p-4 bg-white border border-green-200 rounded-lg">
-                      <h4 className="font-medium text-green-800 mb-2">Minutes of Meeting</h4>
-                      {selectedMeeting.mom.map((mom) => (
-                        <div key={mom.id} className="mb-4">
-                          <div className="flex items-center justify-between">
-                            <p className="text-green-700">
-                              <strong>Summary:</strong> {mom.summary || "N/A"}
-                            </p>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleOpenEditMom(selectedMeeting, mom)}
-                              className="text-green-600 hover:text-green-800 hover:bg-green-100"
-                            >
-                              <Pencil className="h-4 w-4" />
-                            </Button>
-                          </div>
-                          <p className="text-green-700"><strong>Action Items:</strong></p>
-                          <ul className="list-disc pl-5 text-green-700">
-                            {mom.actionItems?.map((item, index) => (
-                              <li key={index}>
-                                {item.task || "N/A"} (Assignee: {item.assignee || "None"}, Due: {item.dueDate || "N/A"})
-                              </li>
-                            )) || <li>No action items</li>}
-                          </ul>
-                          <p className="text-green-700"><strong>Decisions:</strong></p>
-                          <ul className="list-disc pl-5 text-green-700">
-                            {mom.decisions?.map((decision, index) => (
-                              <li key={index}>{decision || "N/A"}</li>
-                            )) || <li>No decisions</li>}
-                          </ul>
-                          <p className="text-green-700">
-                            <strong>Recorded By:</strong> {mom.recordedBy || "N/A"}
-                          </p>
-                          <p className="text-green-700">
-                            <strong>Recorded Date:</strong> {mom.recordedDate || "N/A"}
-                          </p>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </>
+                <div className="space-y-4 p-6">
+                  <p><strong>Title:</strong> {selectedMeeting.title}</p>
+                  <p><strong>Date:</strong> {formatDate(selectedMeeting.date)}</p>
+                  <p><strong>Time:</strong> {formatTimes(selectedMeeting.start?.dateTime)} - {formatTimes(selectedMeeting.end?.dateTime)}</p>
+                  <p><strong>Location:</strong> {selectedMeeting.location}</p>
+                  <p><strong>Attendees:</strong> {selectedMeeting.attendees || 'None'}</p>
+                  <p><strong>Agenda:</strong> {selectedMeeting.agenda || 'N/A'}</p>
+                  <Button
+                    variant="outline"
+                    className="border-green-300 text-green-700 hover:bg-green-50"
+                    onClick={handleCloseModals}
+                  >
+                    Close
+                  </Button>
+                </div>
               )}
-            </DialogContent>
-          </Dialog>
-          <Dialog
-            open={modals.isCreateMomOpen}
-            onOpenChange={(open) => setModals({ ...modals, isCreateMomOpen: open })}
-          >
-            <DialogContent className="max-w-2xl">
-              <DialogHeader>
-                <DialogTitle className="text-green-800">Create Minutes of Meeting</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4 p-6">
-                <div>
-                  <Label className="text-green-800 font-medium flex items-center">
-                    <MessageSquare className="h-5 w-5 mr-2" /> Summary
-                  </Label>
-                  <textarea
-                    value={momForm.summary}
-                    onChange={(e) => handleMomFormChange(e, "summary")}
-                    placeholder="Enter meeting summary..."
-                    className="w-full border-green-300 focus:border-green-500 focus- ring-green-500 rounded-md p-2"
-                    rows={4}
-                  />
-                </div>
-                <div>
-                  <Label className="text-green-800 font-medium flex items-center">
-                    <Tag className="h-5 w-5 mr-2" /> Action Items
-                  </Label>
-                  {momForm.actionItems.map((item, index) => (
-                    <div key={index} className="space-y-2 mt-2">
-                      <Input
-                        name="task"
-                        value={item.task}
-                        onChange={(e) => handleMomFormChange(e, "actionItems", index)}
-                        placeholder="Task description"
-                        className="border-green-300 focus:border-green-500 focus:ring-green-500"
-                      />
-                      <Input
-                        name="assignee"
-                        value={item.assignee}
-                        onChange={(e) => handleMomFormChange(e, "actionItems", index)}
-                        placeholder="Assignee"
-                        className="border-green-300 focus:border-green-500 focus:ring-green-500"
-                      />
-                      <Input
-                        name="dueDate"
-                        type="date"
-                        value={item.dueDate}
-                        onChange={(e) => handleMomFormChange(e, "actionItems", index)}
-                        className="border-green-300 focus:border-green-500 focus:ring-green-500"
-                      />
-                    </div>
-                  ))}
-                  <Button
-                    variant="outline"
-                    className="mt-2 border-green-300 text-green-700 hover:bg-green-50"
-                    onClick={addActionItem}
-                  >
-                    Add Action Item
-                  </Button>
-                </div>
-                <div>
-                  <Label className="text-green-800 font-medium flex items-center">
-                    <CheckCircle className="h-5 w-5 mr-2" /> Decisions
-                  </Label>
-                  {momForm.decisions.map((decision, index) => (
-                    <Input
-                      key={index}
-                      value={decision}
-                      onChange={(e) => handleMomFormChange(e, "decisions", index)}
-                      placeholder="Decision description"
-                      className="mt-2 border-green-300 focus:border-green-500 focus:ring-green-500"
-                    />
-                  ))}
-                  <Button
-                    variant="outline"
-                    className="mt-2 border-green-300 text-green-700 hover:bg-green-50"
-                    onClick={addDecision}
-                  >
-                    Add Decision
-                  </Button>
-                </div>
-                <div>
-                  <Label className="text-green-800 font-medium flex items-center">
-                    <UserIcon className="h-5 w-5 mr-2" /> Recorded By
-                  </Label>
-                  <Input
-                    value={momForm.recordedBy}
-                    onChange={(e) => handleMomFormChange(e, "recordedBy")}
-                    placeholder="Recorder's name..."
-                    className="mt-2 border-green-300 focus:border-green-500 focus:ring-green-500"
-                  />
-                </div>
-                <div>
-                  <Label className="text-green-800 font-medium flex items-center">
-                    <CalendarIcon className="h-5 w-5 mr-2" /> Recorded Date
-                  </Label>
-                  <Input
-                    type="date"
-                    value={momForm.recordedDate}
-                    onChange={(e) => handleMomFormChange(e, "recordedDate")}
-                    className="mt-2 border-green-300 focus:border-green-500 focus:ring-green-500"
-                  />
-                </div>
-                <div className="flex justify-end space-x-2">
-                  <Button
-                    variant="outline"
-                    className="border-green-300 text-green-700 hover:bg-green-50"
-                    onClick={() => setModals({ ...modals, isCreateMomOpen: false })}
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    className="bg-green-700 hover:bg-green-800 text-white"
-                    onClick={() => handleMomSubmit(false)}
-                  >
-                    Submit MoM
-                  </Button>
-                </div>
-              </div>
-            </DialogContent>
-          </Dialog>
-          <Dialog
-            open={modals.isEditMomOpen}
-            onOpenChange={(open) => setModals({ ...modals, isEditMomOpen: open })}
-          >
-            <DialogContent className="max-w-2xl">
-              <DialogHeader>
-                <DialogTitle className="text-green-800">Edit Minutes of Meeting</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4 p-6">
-                <div>
-                  <Label className="text-green-800 font-medium flex items-center">
-                    <MessageSquare className="h-5 w-5 mr-2" /> Summary
-                  </Label>
-                  <textarea
-                    value={momForm.summary}
-                    onChange={(e) => handleMomFormChange(e, "summary")}
-                    placeholder="Enter meeting summary..."
-                    className="w-full border-green-300 focus:border-green-500 focus:ring-green-500 rounded-md p-2"
-                    rows={4}
-                  />
-                </div>
-                <div>
-                  <Label className="text-green-800 font-medium flex items-center">
-                    <Tag className="h-5 w-5 mr-2" /> Action Items
-                  </Label>
-                  {momForm.actionItems.map((item, index) => (
-                    <div key={index} className="space-y-2 mt-2">
-                      <Input
-                        name="task"
-                        value={item.task}
-                        onChange={(e) => handleMomFormChange(e, "actionItems", index)}
-                        placeholder="Task description"
-                        className="border-green-300 focus:border-green-500 focus:ring-green-500"
-                      />
-                      <Input
-                        name="assignee"
-                        value={item.assignee}
-                        onChange={(e) => handleMomFormChange(e, "actionItems", index)}
-                        placeholder="Assignee"
-                        className="border-green-300 focus:border-green-500 focus:ring-green-500"
-                      />
-                      <Input
-                        name="dueDate"
-                        type="date"
-                        value={item.dueDate}
-                        onChange={(e) => handleMomFormChange(e, "actionItems", index)}
-                        className="border-green-300 focus:border-green-500 focus:ring-green-500"
-                      />
-                    </div>
-                  ))}
-                  <Button
-                    variant="outline"
-                    className="mt-2 border-green-300 text-green-700 hover:bg-green-50"
-                    onClick={addActionItem}
-                  >
-                    Add Action Item
-                  </Button>
-                </div>
-                <div>
-                  <Label className="text-green-800 font-medium flex items-center">
-                    <CheckCircle className="h-5 w-5 mr-2" /> Decisions
-                  </Label>
-                  {momForm.decisions.map((decision, index) => (
-                    <Input
-                      key={index}
-                      value={decision}
-                      onChange={(e) => handleMomFormChange(e, "decisions", index)}
-                      placeholder="Decision description"
-                      className="mt-2 border-green-300 focus:border-green-500 focus:ring-green-500"
-                    />
-                  ))}
-                  <Button
-                    variant="outline"
-                    className="mt-2 border-green-300 text-green-700 hover:bg-green-50"
-                    onClick={addDecision}
-                  >
-                    Add Decision
-                  </Button>
-                </div>
-                <div>
-                  <Label className="text-green-800 font-medium flex items-center">
-                    <UserIcon className="h-5 w-5 mr-2" /> Recorded By
-                  </Label>
-                  <Input
-                    value={momForm.recordedBy}
-                    onChange={(e) => handleMomFormChange(e, "recordedBy")}
-                    placeholder="Recorder's name..."
-                    className="mt-2 border-green-300 focus:border-green-500 focus:ring-green-500"
-                  />
-                </div>
-                <div>
-                  <Label className="text-green-800 font-medium flex items-center">
-                    <CalendarIcon className="h-5 w-5 mr-2" /> Recorded Date
-                  </Label>
-                  <Input
-                    type="date"
-                    value={momForm.recordedDate}
-                    onChange={(e) => handleMomFormChange(e, "recordedDate")}
-                    className="mt-2 border-green-300 focus:border-green-500 focus:ring-green-500"
-                  />
-                </div>
-                <div className="flex justify-end space-x-2">
-                  <Button
-                    variant="outline"
-                    className="border-green-300 text-green-700 hover:bg-green-50"
-                    onClick={() => setModals({ ...modals, isEditMomOpen: false })}
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    className="bg-green-700 hover:bg-green-800 text-white"
-                    onClick={() => handleMomSubmit(true)}
-                  >
-                    Update MoM
-                  </Button>
-                </div>
-              </div>
             </DialogContent>
           </Dialog>
           <Dialog
@@ -1192,458 +843,39 @@ function MeetingsPage  ({ id })  {
                   onClick={confirmDelete}
                   disabled={deleteLoading}
                 >
-                  {deleteLoading ? "Deleting..." : "Delete"}
+                  {deleteLoading ? 'Deleting...' : 'Delete'}
                 </Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
+
+
+          <Dialog
+  open={modals.isViewMomOpen}
+  onOpenChange={(open) => setModals({ ...modals, isViewMomOpen: open })}
+>
+  <DialogContent className="w-[70vw] h-[90vh] max-w-none p-6 overflow-y-auto">
+    <MeetingDetailsWithMOM
+      isOpen={modals.isViewMomOpen}
+      onClose={handleCloseModals}
+      meeting={selectedMeeting}
+      TIME_ZONE={TIME_ZONE}
+    />
+  </DialogContent>
+</Dialog>
+
+
+
           <CodeVerificationModal
             isOpen={isModalOpen}
             onClose={() => setModalOpen(false)}
             verificationUrl={verificationUrl}
             style={{ zIndex: 999999 }}
           />
-  
         </CardContent>
       </Card>
     </div>
   );
-};
+}
 
 export default MeetingsPage;
-
-
-
-
-
-
-
-
-
-
-
-
-
-// import { fetchMoM } from '@/store/features/momSlice';
-
-// const MeetingsPage = ({ id }) => {
-//   const dispatch = useDispatch();
-//   const contactId = id;
-//   const {
-//     contactMeetings,
-//     contactMeetingsLoading,
-//     contactMeetingsError,
-//     createLoading,
-//     updateLoading,
-//     deleteLoading,
-//     error,
-//   } = useSelector((state) => state.meetings);
-//   const { slots, loading: slotsLoading } = useSelector((state) => state.slots);
-//   const [isModalOpen, setModalOpen] = useState(false);
-//   const [verificationUrl, setVerificationUrl] = useState('');
-//   const [meetingsData, setMeetingsData] = useState([]);
-//   const [selectedMeeting, setSelectedMeeting] = useState(null);
-//   const [modals, setModals] = useState({
-//     isCreateOpen: false,
-//     isEditOpen: false,
-//     isViewOpen: false,
-//     isMoMOpen: false,
-//     isDeleteConfirmOpen: false,
-//   });
-//   const [searchQuery, setSearchQuery] = useState('');
-//   const [dateRange, setDateRange] = useState({ from: null, to: null });
-
-//   useEffect(() => {
-//     if (contactId) {
-//       dispatch(fetchMeetingsByContactId(contactId));
-//     }
-//   }, [contactId, dispatch]);
-
-//   useEffect(() => {
-//     if (contactMeetings.length > 0) {
-//       const mappedMeetings = contactMeetings.map((meeting) => ({
-//         meetingId: meeting.id,
-//         title: meeting.summary || 'Untitled',
-//         date: meeting.start?.dateTime || new Date().toISOString(),
-//         location: meeting.hangoutLink || 'N/A',
-//         attendees: meeting.attendees?.map((attendee) => attendee.email).join(', ') || '',
-//         agenda: meeting.description || '',
-//         mom: meeting.mom || [],
-//         start: meeting.start,
-//         end: meeting.end,
-//         hangoutLink: meeting.hangoutLink,
-//         htmlLink: meeting.htmlLink,
-//         conferenceData: meeting.conferenceData,
-//       }));
-//       setMeetingsData(mappedMeetings);
-//     } else {
-//       setMeetingsData([]);
-//     }
-//   }, [contactMeetings]);
-
-//   const handleCreate = async (newMeeting) => {
-//     try {
-//       const response = await dispatch(createMeeting(newMeeting));
-//       if (response.payload?.response?.data?.message === 'User not authorized') {
-//         setVerificationUrl(response.payload.response.data.url);
-//         setModalOpen(true);
-//         setModals({ ...modals, isCreateOpen: false });
-//       } else {
-//         setModals({ ...modals, isCreateOpen: false });
-//         toast.success('Meeting created successfully!');
-//       }
-//     } catch (error) {
-//       toast.error('Failed to create meeting.');
-//       console.error('Error creating meeting:', error);
-//     }
-//   };
-
-//   const handleEdit = async (updatedMeeting) => {
-//     try {
-//       await dispatch(UpdateMeeting({ meetingData: updatedMeeting }));
-//       setModals({ ...modals, isEditOpen: false });
-//       setSelectedMeeting(null);
-//       toast.success('Meeting updated successfully!');
-//     } catch (error) {
-//       toast.error('Failed to update meeting.');
-//       console.error('Error updating meeting:', error);
-//     }
-//   };
-
-//   const handleDelete = async (meetingId) => {
-//     setMeetingToDelete(meetingId);
-//     setModals({ ...modals, isDeleteConfirmOpen: true });
-//   };
-
-//   const confirmDelete = async () => {
-//     if (meetingToDelete) {
-//       try {
-//         await dispatch(
-//           deleteMeeting({ id: meetingToDelete, email: 'it_chinmaya@outlook.com' })
-//         ).unwrap();
-//         toast.success('Meeting deleted successfully!');
-//       } catch (err) {
-//         toast.error('Failed to delete meeting.');
-//         console.error('Error deleting meeting:', err);
-//       } finally {
-//         setModals({ ...modals, isDeleteConfirmOpen: false });
-//         setMeetingToDelete(null);
-//       }
-//     }
-//   };
-
-//   const handleView = (meeting) => {
-//     setSelectedMeeting(meeting);
-//     setModals({ ...modals, isViewOpen: true });
-//   };
-
-//   const handleOpenMoM = (meeting) => {
-//     setSelectedMeeting(meeting);
-//     dispatch(fetchMoM(meeting.meetingId));
-//     setModals({ ...modals, isMoMOpen: true });
-//   };
-
-//   const handleCloseModals = () => {
-//     setModals({
-//       isCreateOpen: false,
-//       isEditOpen: false,
-//       isViewOpen: false,
-//       isMoMOpen: false,
-//       isDeleteConfirmOpen: false,
-//     });
-//     setSelectedMeeting(null);
-//     dispatch(clearError());
-//   };
-
-//   const resetDateRange = () => {
-//     setDateRange({ from: null, to: null });
-//   };
-
-//   const formatDate = (date) => {
-//     return date ? format(new Date(date), 'PPP') : 'N/A';
-//   };
-
-//   const formatTimes = (dateTime) => {
-//     return dateTime ? format(new Date(dateTime), 'p') : 'N/A';
-//   };
-
-//   const filteredMeetings = meetingsData.filter((meeting) => {
-//     const matchesSearch = meeting.title
-//       ?.toLowerCase()
-//       .includes(searchQuery.toLowerCase());
-//     const meetingDate = meeting.date
-//       ? new Date(meeting.date).toISOString().split('T')[0]
-//       : '';
-//     const matchesDateRange =
-//       !dateRange.from ||
-//       !dateRange.to ||
-//       (meetingDate &&
-//         isWithinInterval(parseISO(meetingDate), {
-//           start: dateRange.from,
-//           end: dateRange.to,
-//         }));
-//     return matchesSearch && matchesDateRange;
-//   });
-
-//   return (
-//     <div className="min-h-screen p-6">
-//       <Card className="mx-auto border-green-200 shadow-lg">
-//         <CardHeader className="border-b border-green-200">
-//           <CardTitle className="flex justify-between items-center text-green-800">
-//             <div className="flex items-center space-x-2">
-//               <CalendarIcon className="h-6 w-6" />
-//               <span className="text-2xl font-bold">Meetings for Contact ID: {id}</span>
-//             </div>
-//             <Button
-//               className="bg-green-700 hover:bg-green-800 text-white"
-//               onClick={() => setModals({ ...modals, isCreateOpen: true })}
-//             >
-//               <Plus className="h-4 w-4 mr-2" />
-//               Create New Meeting
-//             </Button>
-//           </CardTitle>
-//         </CardHeader>
-//         <CardContent className="p-6">
-//           {contactMeetingsError && (
-//             <Alert variant="destructive" className="mb-6">
-//               <AlertDescription>{contactMeetingsError}</AlertDescription>
-//             </Alert>
-//           )}
-//           <div className="flex flex-col md:flex-row gap-4 mb-6 items-center">
-//             <div className="relative flex-1">
-//               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-green-600" />
-//               <Input
-//                 placeholder="Search by meeting title..."
-//                 value={searchQuery}
-//                 onChange={(e) => setSearchQuery(e.target.value)}
-//                 className="pl-10 border-green-300 focus:ring-green-500 text-green-900 rounded-lg"
-//               />
-//             </div>
-//             <div className="flex items-center gap-2">
-//               <Popover>
-//                 <PopoverTrigger asChild>
-//                   <Button
-//                     variant="outline"
-//                     className="border-green-300 text-green-700 hover:bg-green-50 rounded-lg"
-//                   >
-//                     <CalendarIcon className="h-5 w-5 mr-2" />
-//                     {dateRange.from && dateRange.to
-//                       ? `${format(dateRange.from, 'PPP')} - ${format(dateRange.to, 'PPP')}`
-//                       : 'Select Date Range'}
-//                   </Button>
-//                 </PopoverTrigger>
-//                 <PopoverContent className="w-auto p-0" align="end">
-//                   <CalendarComponent
-//                     mode="range"
-//                     selected={dateRange}
-//                     onSelect={setDateRange}
-//                     initialFocus
-//                   />
-//                 </PopoverContent>
-//               </Popover>
-//               {(dateRange.from || dateRange.to) && (
-//                 <Button
-//                   variant="ghost"
-//                   size="sm"
-//                   onClick={resetDateRange}
-//                   className="text-green-600 hover:text-green-800 hover:bg-green-100"
-//                 >
-//                   <X className="h-4 w-4 mr-1" />
-//                   Reset
-//                 </Button>
-//               )}
-//             </div>
-//           </div>
-//           <div className="bg-white rounded-lg border border-green-200 overflow-hidden">
-//             <Table>
-//               <TableHeader>
-//                 <TableRow className="bg-green-50">
-//                   <TableHead className="text-green-800 font-semibold">Title</TableHead>
-//                   <TableHead className="text-green-800 font-semibold">Date</TableHead>
-//                   <TableHead className="text-green-800 font-semibold">Time</TableHead>
-//                   <TableHead className="text-green-800 font-semibold">Link</TableHead>
-//                   <TableHead className="text-green-800 font-semibold">Attendees</TableHead>
-//                   <TableHead className="text-green-800 font-semibold">Actions</TableHead>
-//                 </TableRow>
-//               </TableHeader>
-//               <TableBody>
-//                 {contactMeetingsLoading ? (
-//                   <TableRow>
-//                     <TableCell colSpan={6} className="text-center py-8">
-//                       <Loader2 className="h-8 w-8 animate-spin text-green-600 mx-auto" />
-//                       <span className="text-green-700">Loading meetings...</span>
-//                     </TableCell>
-//                   </TableRow>
-//                 ) : filteredMeetings.length === 0 ? (
-//                   <TableRow>
-//                     <TableCell colSpan={6} className="text-center py-8">
-//                       <div className="text-green-700">No meetings found.</div>
-//                     </TableCell>
-//                   </TableRow>
-//                 ) : (
-//                   filteredMeetings.map((meeting) => (
-//                     <TableRow key={meeting.meetingId} className="hover:bg-green-50">
-//                       <TableCell className="font-medium text-green-800">{meeting.title}</TableCell>
-//                       <TableCell className="text-green-700">{formatDate(meeting.date)}</TableCell>
-//                       <TableCell className="text-green-700">
-//                         {formatTimes(meeting.start?.dateTime)} - {formatTimes(meeting.end?.dateTime)}
-//                       </TableCell>
-//                       <TableCell className="text-green-700">
-//                         {meeting.hangoutLink ? (
-//                           <a
-//                             href={meeting.hangoutLink}
-//                             target="_blank"
-//                             rel="noopener noreferrer"
-//                             className="inline-flex items-center px-3 py-1.5 bg-green-600 text-white text-sm font-medium rounded hover:bg-green-700 transition"
-//                           >
-//                             Join Meeting
-//                           </a>
-//                         ) : (
-//                           'Online'
-//                         )}
-//                       </TableCell>
-//                       <TableCell className="text-green-700">
-//                         {meeting.attendees
-//                           ? `${meeting.attendees.split(', ').length} attendees`
-//                           : 'None'}
-//                       </TableCell>
-//                       <TableCell>
-//                         <div className="flex space-x-1">
-//                           <Button
-//                             variant="ghost"
-//                             size="sm"
-//                             onClick={() => handleView(meeting)}
-//                             className="text-green-600 hover:text-green-800 hover:bg-green-100"
-//                           >
-//                             <Eye className="h-4 w-4" />
-//                           </Button>
-//                           <Button
-//                             variant="ghost"
-//                             size="sm"
-//                             onClick={() => {
-//                               setSelectedMeeting(meeting);
-//                               setModals({ ...modals, isEditOpen: true });
-//                             }}
-//                             className="text-green-600 hover:text-green-800 hover:bg-green-100"
-//                           >
-//                             <Pencil className="h-4 w-4" />
-//                           </Button>
-//                           <Button
-//                             variant="ghost"
-//                             size="sm"
-//                             onClick={() => handleDelete(meeting.meetingId)}
-//                             disabled={deleteLoading}
-//                             className="text-red-600 hover:text-red-800 hover:bg-red-100"
-//                           >
-//                             <Trash2 className="h-4 w-4" />
-//                           </Button>
-//                           <Button
-//                             variant="ghost"
-//                             size="sm"
-//                             onClick={() => handleOpenMoM(meeting)}
-//                             className="text-green-600 hover:text-green-800 hover:bg-green-100"
-//                           >
-//                             <FileText className="h-4 w-4" />
-//                           </Button>
-//                         </div>
-//                       </TableCell>
-//                     </TableRow>
-//                   ))
-//                 )}
-//               </TableBody>
-//             </Table>
-//           </div>
-//           <Dialog
-//             open={modals.isCreateOpen}
-//             onOpenChange={(open) => setModals({ ...modals, isCreateOpen: open })}
-//           >
-//             <DialogContent className="max-w-4xl">
-//               <DialogHeader>
-//                 <DialogTitle className="text-green-800">Create New Meeting</DialogTitle>
-//               </DialogHeader>
-//               <MeetingForm
-//                 onSave={handleCreate}
-//                 onCancel={handleCloseModals}
-//                 loading={createLoading}
-//               />
-//             </DialogContent>
-//           </Dialog>
-//           <Dialog
-//             open={modals.isEditOpen}
-//             onOpenChange={(open) => setModals({ ...modals, isEditOpen: open })}
-//           >
-//             <DialogContent className="max-w-2xl">
-//               <DialogHeader>
-//                 <DialogTitle className="text-green-800">Edit Meeting</DialogTitle>
-//               </DialogHeader>
-//               {selectedMeeting && (
-//                 <MeetingForm
-//                   meeting={selectedMeeting}
-//                   onSave={handleEdit}
-//                   onCancel={handleCloseModals}
-//                   isEditing={true}
-//                   loading={updateLoading}
-//                 />
-//               )}
-//             </DialogContent>
-//           </Dialog>
-//           <Dialog
-//             open={modals.isViewOpen}
-//             onOpenChange={(open) => setModals({ ...modals, isViewOpen: open })}
-//           >
-//             <DialogContent className="max-w-2xl">
-//               <DialogHeader>
-//                 <DialogTitle className="text-green-800">Meeting Details</DialogTitle>
-//               </DialogHeader>
-//               {selectedMeeting && (
-//                 <MeetingDetails meeting={selectedMeeting} onClose={handleCloseModals} />
-//               )}
-//             </DialogContent>
-//           </Dialog>
-//           <MoMDetailsModal
-//             isOpen={modals.isMoMOpen}
-//             onClose={() => setModals({ ...modals, isMoMOpen: false })}
-//             meeting={selectedMeeting}
-//             TIME_ZONE={TIME_ZONE}
-//           />
-//           <Dialog
-//             open={modals.isDeleteConfirmOpen}
-//             onOpenChange={(open) => setModals({ ...modals, isDeleteConfirmOpen: open })}
-//           >
-//             <DialogContent>
-//               <DialogHeader>
-//                 <DialogTitle>Confirm Deletion</DialogTitle>
-//                 <DialogDescription>
-//                   Are you sure you want to delete this meeting? This action cannot be undone.
-//                 </DialogDescription>
-//               </DialogHeader>
-//               <DialogFooter>
-//                 <Button
-//                   variant="outline"
-//                   onClick={() => setModals({ ...modals, isDeleteConfirmOpen: false })}
-//                 >
-//                   Cancel
-//                 </Button>
-//                 <Button
-//                   variant="destructive"
-//                   onClick={confirmDelete}
-//                   disabled={deleteLoading}
-//                 >
-//                   {deleteLoading ? 'Deleting...' : 'Delete'}
-//                 </Button>
-//               </DialogFooter>
-//             </DialogContent>
-//           </Dialog>
-//           <CodeVerificationModal
-//             isOpen={isModalOpen}
-//             onClose={() => setModalOpen(false)}
-//             verificationUrl={verificationUrl}
-//             style={{ zIndex: 999999 }}
-//           />
-//         </CardContent>
-//       </Card>
-//     </div>
-//   );
-// };
-
-// export default MeetingsPage;
