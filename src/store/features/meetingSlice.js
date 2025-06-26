@@ -77,10 +77,10 @@ export const fetchMeetingsByContactId = createAsyncThunk(
   async (contactId, { rejectWithValue }) => {
     try {
       const response = await axiosInstance3.get(`/meetings/contact/${contactId}`);
-      console.log("Fetched contact meetings:", response.data);
+      // console.log("Fetched contact meetings:", response.data);
       return response.data;
     } catch (error) {
-      console.error("Error in fetchMeetingsByContactId:", error);
+      // console.error("Error in fetchMeetingsByContactId:", error);
       return rejectWithValue(error.response?.data?.message || 'Failed to fetch meetings by contactId');
     }
   }
