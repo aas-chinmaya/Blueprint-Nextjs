@@ -10,7 +10,7 @@ export const submitCause = createAsyncThunk(
   'cause/submit',
   async ({ meetingId, reason, submittedBy }, { rejectWithValue }) => {
     try {
-      const res = await axiosInstance.post('/api/calendar/show-cause', {
+      const res = await axiosInstance.post('/showcause/submit', {
         meetingId,
         reason,
         submittedBy
@@ -27,7 +27,7 @@ export const getCauseByMeetingId = createAsyncThunk(
   'cause/getByMeetingId',
   async (meetingId, { rejectWithValue }) => {
     try {
-      const res = await axiosInstance.get(`/api/calendar/show-cause/${meetingId}`);
+      const res = await axiosInstance.get(`/showcause/meeting/${meetingId}`);
       return res.data;
     } catch (err) {
       return rejectWithValue(err.response?.data || { message: 'Not found' });
@@ -40,7 +40,7 @@ export const getAllCauses = createAsyncThunk(
   'cause/getAll',
   async (_, { rejectWithValue }) => {
     try {
-      const res = await axiosInstance.get('/api/calendar/show-cause');
+      const res = await axiosInstance.get('/showcause/all');
       return res.data;
     } catch (err) {
       return rejectWithValue(err.response?.data || { message: 'Fetch failed' });
@@ -53,7 +53,7 @@ export const updateCauseStatusById = createAsyncThunk(
   'cause/updateStatusById',
   async ({ id, status }, { rejectWithValue }) => {
     try {
-      const res = await axiosInstance.patch(`/api/calendar/show-cause/${id}/status`, {
+      const res = await axiosInstance.patch(`/showcause/${id}/status`, {
         status
       });
       return res.data;
@@ -68,7 +68,7 @@ export const updateCauseStatusByMeetingId = createAsyncThunk(
   'cause/updateStatusByMeetingId',
   async ({ meetingId, status }, { rejectWithValue }) => {
     try {
-      const res = await axiosInstance.patch(`/api/calendar/show-cause/meeting/${meetingId}/status`, {
+      const res = await axiosInstance.patch(`/api/showcause/meeting/${meetingId}/status`, {
         status
       });
       return res.data;
