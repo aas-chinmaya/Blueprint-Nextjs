@@ -369,6 +369,7 @@ export default function Meeting() {
     updateLoading = false,
     deleteLoading = false,
   } = meetingsState;
+  //need to be updated 
   const email = "it_chinmaya@outlook.com";
   const [isModalOpen, setModalOpen] = useState(false);
   const [verificationUrl, setVerificationUrl] = useState("");

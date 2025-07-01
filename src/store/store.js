@@ -24,8 +24,9 @@ import momReducer from './features/momSlice';
 import slotReducer from './features/master/slotMasterSlice';
 // import slotReducer from './features/calender/slotSlice';
 import meetingCalendarReducer from './features/calender/meetingCalendarSlice';
-
+import quotationReducer from './features/quotationSlice';
 import serviceReducer from './features/master/serviceMasterSlice';
+import causeReducer from './features/causeSlice';
 const rootReducer = combineReducers({
   auth: authReducer,
   sidebar: sidebarReducer,
@@ -53,13 +54,14 @@ const rootReducer = combineReducers({
 
   slots: slotReducer,
   meetingCalendar: meetingCalendarReducer,
+  cause: causeReducer,
 
 
 
   //master
     slots: slotReducer,
     services: serviceReducer,
-
+    quotation : quotationReducer,
 });
 
 const store = configureStore({

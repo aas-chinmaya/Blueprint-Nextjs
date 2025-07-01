@@ -75,6 +75,11 @@ const fullNavData = [
     ],
   },
   {
+    title: "Quotation",
+    url: "/quotation",
+    icon: IconBug,
+  },
+  {
     title: "Client",
     url: "/client",
     icon: IconUser,
@@ -95,11 +100,6 @@ const fullNavData = [
     icon: IconUsers,
   },
   // Optional future sections:
-  // {
-  //   title: "Bug",
-  //   url: "/bug",
-  //   icon: IconBug,
-  // },
   // {
   //   title: "Report",
   //   url: "/report",
