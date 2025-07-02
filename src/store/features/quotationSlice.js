@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axiosInstance from '@/lib/axiosInstance';
+import axiosInstance5 from '@/lib/axiosInstance5';
  
 // Initial State
 const initialState = {
@@ -15,7 +16,7 @@ export const createQuotation = createAsyncThunk(
   'quotation/createQuotation',
   async (quotationData, { rejectWithValue }) => {
     try {
-      const res = await axiosInstance.post('/quotation/create', quotationData);
+      const res = await axiosInstance5.post('/quotation/create', quotationData);
       return res.data;
     } catch (err) {
       return rejectWithValue(err.response?.data || err.message);
