@@ -1,4 +1,4 @@
-import Meeting from "@/components/meetings/Meeting";
+import Meeting from "@/components/meetings/backup/Meeting";
 
 // this file should be de;leted later after testing the meeting  
 export default function Page() {

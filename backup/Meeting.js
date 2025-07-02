@@ -36,7 +36,7 @@ import {
   TableCell,
 } from "@/components/ui/table";
 import Loader from "@/components/ui/loader";
-import CodeVerificationModal from "./meeting/MeetcodeModal";
+import CodeVerificationModal from "../meeting/MeetcodeModal";
 import {
   fetchMeetings,
   createMeeting,

@@ -67,11 +67,32 @@ export const fetchMoMView = createAsyncThunk(
 );
 
 // Create MoM
+
 export const createMoM = createAsyncThunk(
   'mom/createMoM',
   async (momData, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.post('/mom/createmom', momData);
+      // Create FormData object
+      const formData = new FormData();
+      // Append all fields to FormData
+      Object.keys(momData).forEach((key) => {
+        if (key === 'participants') {
+          // Stringify array fields
+          formData.append(key, JSON.stringify(momData[key]));
+        } else if (key === 'signature' && momData[key] instanceof File) {
+          // Append file
+          formData.append(key, momData[key]);
+        } else if (momData[key] !== undefined && momData[key] !== null) {
+          // Append other fields
+          formData.append(key, momData[key]);
+        }
+      });
+
+      const response = await axiosInstance.post('/mom/createmom', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || 'Failed to create MoM');
@@ -79,19 +100,32 @@ export const createMoM = createAsyncThunk(
   }
 );
 
-// Update MoM
 export const updateMoM = createAsyncThunk(
   'mom/updateMoM',
   async (momData, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.put('/mom/update', momData);
+      const formData = new FormData();
+      Object.keys(momData).forEach((key) => {
+        if (key === 'participants') {
+          formData.append(key, JSON.stringify(momData[key]));
+        } else if (key === 'signature' && momData[key] instanceof File) {
+          formData.append(key, momData[key]);
+        } else if (momData[key] !== undefined && momData[key] !== null) {
+          formData.append(key, momData[key]);
+        }
+      });
+
+      const response = await axiosInstance.put(`/mom/update`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || 'Failed to update MoM');
     }
   }
 );
-
 const momSlice = createSlice({
   name: 'mom',
   initialState: {

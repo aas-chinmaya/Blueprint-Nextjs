@@ -26,6 +26,7 @@ import slotReducer from './features/master/slotMasterSlice';
 import meetingCalendarReducer from './features/calender/meetingCalendarSlice';
 import quotationReducer from './features/quotationSlice';
 import serviceReducer from './features/master/serviceMasterSlice';
+import industryReducer from './features/master/industriesMasterSlice';
 import causeReducer from './features/causeSlice';
 const rootReducer = combineReducers({
   auth: authReducer,
@@ -61,6 +62,7 @@ const rootReducer = combineReducers({
   //master
     slots: slotReducer,
     services: serviceReducer,
+    industries: industryReducer,
     quotation : quotationReducer,
 });
 

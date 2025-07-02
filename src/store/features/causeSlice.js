@@ -53,7 +53,7 @@ export const updateCauseStatusById = createAsyncThunk(
   'cause/updateStatusById',
   async ({ id, status }, { rejectWithValue }) => {
     try {
-      const res = await axiosInstance.patch(`/showcause/${id}/status`, {
+      const res = await axiosInstance.put(`/showcause/updatestatus/${id}`, {
         status
       });
       return res.data;
@@ -68,7 +68,7 @@ export const updateCauseStatusByMeetingId = createAsyncThunk(
   'cause/updateStatusByMeetingId',
   async ({ meetingId, status }, { rejectWithValue }) => {
     try {
-      const res = await axiosInstance.patch(`/api/showcause/meeting/${meetingId}/status`, {
+      const res = await axiosInstance.patch(`/api/showcause/meeting/${meetingId}`, {
         status
       });
       return res.data;
