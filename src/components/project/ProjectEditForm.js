@@ -9,7 +9,7 @@ import { useEffect, useState, useRef } from 'react';
 import { validateInput, sanitizeInput } from '@/lib/sanitize';
 import { useDispatch, useSelector } from 'react-redux';
 import { useRouter } from 'next/navigation';
-import { fetchProjectById, updateProject } from '@/store/features/viewProjectsByIdSlice';
+import { fetchProjectById, updateProject } from '@/store/features/projectSlice'; // Corrected import
 import {
   FiCalendar,
   FiUser,
@@ -31,7 +31,7 @@ export default function ProjectEditForm({ projectId }) {
   console.log('Project ID:', projectId);
   const dispatch = useDispatch();
   const router = useRouter();
-  const { project, status, error } = useSelector((state) => state.projectView);
+  const { project, status, error } = useSelector((state) => state.project); // Corrected selector
 
   const formRef = useRef(null);
   const fileInputRef = useRef(null);
@@ -45,19 +45,20 @@ export default function ProjectEditForm({ projectId }) {
     startDate: '',
     endDate: '',
     category: '',
-    attachments: [], // Store all files (newly uploaded)
+    attachments: [],
   });
 
   const [isTeamLeadSelectOpen, setIsTeamLeadSelectOpen] = useState(false);
   const [dragActive, setDragActive] = useState(false);
   const [fileErrors, setFileErrors] = useState([]);
+  const [isFormInitialized, setIsFormInitialized] = useState(false); // Flag to prevent loop
 
   // Fetch project data on component mount
   useEffect(() => {
-    if (projectId) {
+    if (projectId && status.fetchProject === 'idle') {
       dispatch(fetchProjectById(projectId));
     }
-  }, [dispatch, projectId]);
+  }, [dispatch, projectId, status.fetchProject]);
 
   // Animate form appearance
   useEffect(() => {
@@ -68,9 +69,9 @@ export default function ProjectEditForm({ projectId }) {
     );
   }, []);
 
-  // Update form data when project data is fetched
+  // Update form data when project data is fetched, only if not initialized
   useEffect(() => {
-    if (project && project.data) {
+    if (project && project.data && !isFormInitialized && status.fetchProject === 'succeeded') {
       setFormData({
         projectName: project.data.projectName || '',
         description: project.data.description || '',
@@ -79,10 +80,11 @@ export default function ProjectEditForm({ projectId }) {
         startDate: project.data.startDate ? project.data.startDate.split('T')[0] : '',
         endDate: project.data.endDate ? project.data.endDate.split('T')[0] : '',
         category: project.data.category || '',
-        attachments: [], // Initialize with no files; existing files will be fetched separately if needed
+        attachments: [], // Initialize with no files; existing files handled separately
       });
+      setIsFormInitialized(true); // Prevent re-initialization
     }
-  }, [project]);
+  }, [project, status.fetchProject, isFormInitialized]);
 
   // Click outside handler for team lead select dropdown
   useEffect(() => {
@@ -193,8 +195,12 @@ export default function ProjectEditForm({ projectId }) {
 
     if (errors.length > 0) {
       setFileErrors(errors);
-      toast.error(errors.join(' ')
-      );
+      toast({
+        title: 'File Upload Error',
+        description: errors.join(' '),
+        variant: 'destructive',
+        duration: 3000,
+      });
     }
 
     if (validFiles.length > 0) {
@@ -253,6 +259,12 @@ export default function ProjectEditForm({ projectId }) {
 
     if (hasErrors) {
       setFormErrors(newErrors);
+      toast({
+        title: 'Validation Error',
+        description: 'Please fix the errors in the form before submitting.',
+        variant: 'destructive',
+        duration: 3000,
+      });
       return;
     }
 
@@ -266,7 +278,6 @@ export default function ProjectEditForm({ projectId }) {
       submissionData.append('endDate', formData.endDate);
       submissionData.append('category', formData.category);
 
-      // Append all attachments under a single key
       formData.attachments.forEach((file) => {
         submissionData.append('attachments[]', file);
       });
@@ -280,10 +291,20 @@ export default function ProjectEditForm({ projectId }) {
 
       await dispatch(updateProject({ projectId, updatedData: submissionData })).unwrap();
 
-      toast.success('Project updated successfully!');
-      router.push('/projects');
+      toast({
+        title: 'Success',
+        description: 'Project updated successfully!',
+        variant: 'success',
+        duration: 3000,
+      });
+      router.push('/project');
     } catch (err) {
-      toast.error(`Failed to update project: ${err.message || 'Unknown error'}`);
+      toast({
+        title: 'Error',
+        description: `Failed to update project: ${err.message || 'Unknown error'}`,
+        variant: 'destructive',
+        duration: 3000,
+      });
       gsap.to(formRef.current, {
         opacity: 1,
         y: 0,
@@ -315,7 +336,7 @@ export default function ProjectEditForm({ projectId }) {
     }
   };
 
-  if (status === 'loading') {
+  if (status.fetchProject === 'loading') {
     return (
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12 flex flex-col items-center justify-center min-h-64">
         <div className="animate-spin rounded-full h-12 w-12 border-b-3 border-t-3 border-blue-600 mb-4"></div>
@@ -324,15 +345,16 @@ export default function ProjectEditForm({ projectId }) {
     );
   }
 
-  if (status === 'failed') {
+  if (status.fetchProject === 'failed') {
     return (
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12 flex justify-center">
         <div className="bg-red-50 border border-red-200 text-red-700 px-4 sm:px-6 py-5 rounded-lg max-w-md w-full">
           <p className="font-semibold text-base sm:text-lg mb-2">Unable to load project</p>
-          <p className="text-red-600 text-sm sm:text-base">{error}</p>
+          <p className="text-red-600 text-sm sm:text-base">{error.fetchProject || 'An error occurred'}</p>
           <button
             onClick={() => dispatch(fetchProjectById(projectId))}
             className="mt-4 bg-red-100 hover:bg-red-200 text-red-700 px-4 sm:px-5 py-2 rounded-lg text-sm sm:text-base font-medium flex items-center gap-2 mx-auto transition-colors"
+            aria-label="Retry loading project"
           >
             <FiArrowLeft className="h-4 w-4" />
             Retry
@@ -349,8 +371,9 @@ export default function ProjectEditForm({ projectId }) {
     >
       <div className="flex items-center gap-3 mb-6">
         <button
-          onClick={() => router.push('/projects')}
+          onClick={() => router.push('/project')}
           className="cursor-pointer inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 bg-blue-50 px-3 py-2 rounded-full font-medium text-sm transition-all hover:bg-blue-100"
+          aria-label="Back to projects"
         >
           <FiArrowLeft className="h-5 w-5" />
           <span className="hidden sm:inline">Back</span>
@@ -378,9 +401,10 @@ export default function ProjectEditForm({ projectId }) {
               value={formData.projectName}
               onChange={handleChange}
               required
-              disabled={status === 'loading' || status === 'updating'}
+              disabled={status.fetchProject === 'loading' || status.updateProject === 'loading'}
               className={`w-full p-2 border ${formErrors.projectName ? 'border-red-300 bg-red-50' : 'border-gray-200 bg-white'} rounded-md focus:outline-none disabled:opacity-50 ${formErrors.projectName ? 'focus:border-red-400' : 'focus:border-gray-400'}`}
               placeholder="Enter project name"
+              aria-label="Project name"
             />
           </div>
 
@@ -395,8 +419,9 @@ export default function ProjectEditForm({ projectId }) {
               value={formData.category}
               onChange={handleChange}
               required
-              disabled={status === 'loading' || status === 'updating'}
+              disabled={status.fetchProject === 'loading' || status.updateProject === 'loading'}
               className={`w-full p-2 cursor-pointer border ${formErrors.category ? 'border-red-300 bg-red-50' : 'border-gray-200 bg-white'} rounded-md focus:outline-none disabled:opacity-50 ${formErrors.category ? 'focus:border-red-400' : 'focus:border-gray-400'}`}
+              aria-label="Project category"
             >
               <option value="">Select Category</option>
               <option value="client">Client</option>
@@ -422,7 +447,7 @@ export default function ProjectEditForm({ projectId }) {
                 }));
                 setIsTeamLeadSelectOpen(false);
               }}
-              disabled={status === 'loading' || status === 'updating'}
+              disabled={status.fetchProject === 'loading' || status.updateProject === 'loading'}
             />
           </div>
 
@@ -438,8 +463,9 @@ export default function ProjectEditForm({ projectId }) {
               value={formData.startDate}
               onChange={handleChange}
               required
-              disabled={status === 'loading' || status === 'updating'}
+              disabled={status.fetchProject === 'loading' || status.updateProject === 'loading'}
               className={`w-full cursor-pointer p-2 border ${formErrors.startDate ? 'border-red-300 bg-red-50' : 'border-gray-200 bg-white'} rounded-md focus:outline-none disabled:opacity-50 ${formErrors.startDate ? 'focus:border-red-400' : 'focus:border-gray-400'}`}
+              aria-label="Start date"
             />
           </div>
 
@@ -455,8 +481,9 @@ export default function ProjectEditForm({ projectId }) {
               value={formData.endDate}
               onChange={handleChange}
               required
-              disabled={status === 'loading' || status === 'updating'}
+              disabled={status.fetchProject === 'loading' || status.updateProject === 'loading'}
               className={`w-full cursor-pointer p-2 border ${formErrors.endDate ? 'border-red-300 bg-red-50' : 'border-gray-200 bg-white'} rounded-md focus:outline-none disabled:opacity-50 ${formErrors.endDate ? 'focus:border-red-400' : 'focus:border-gray-400'}`}
+              aria-label="End date"
             />
           </div>
 
@@ -468,7 +495,7 @@ export default function ProjectEditForm({ projectId }) {
             onDragLeave={handleDrag}
             onDragOver={handleDrag}
             onDrop={handleDrop}
-            onClick={() => status !== 'loading' && status !== 'updating' && fileInputRef.current?.click()}
+            onClick={() => status.fetchProject !== 'loading' && status.updateProject !== 'loading' && fileInputRef.current?.click()}
           >
             <input
               ref={fileInputRef}
@@ -476,8 +503,9 @@ export default function ProjectEditForm({ projectId }) {
               multiple
               onChange={(e) => handleFiles(e.target.files)}
               className="hidden"
-              disabled={status === 'loading' || status === 'updating'}
+              disabled={status.fetchProject === 'loading' || status.updateProject === 'loading'}
               accept="application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation,text/plain"
+              aria-label="Upload files"
             />
             <div className="text-center mb-2">
               <FiUpload className="mx-auto text-xl text-gray-500 mb-1" />
@@ -503,7 +531,8 @@ export default function ProjectEditForm({ projectId }) {
                           type="button"
                           onClick={() => removeFile(index)}
                           className="text-gray-400 hover:text-red-400 p-1"
-                          disabled={status === 'loading' || status === 'updating'}
+                          disabled={status.fetchProject === 'loading' || status.updateProject === 'loading'}
+                          aria-label={`Remove ${fileName}`}
                         >
                           <FiX size={16} />
                         </button>
@@ -537,9 +566,10 @@ export default function ProjectEditForm({ projectId }) {
               value={formData.description}
               onChange={handleChange}
               required
-              disabled={status === 'loading' || status === 'updating'}
+              disabled={status.fetchProject === 'loading' || status.updateProject === 'loading'}
               className={`w-full h-[calc(100%-32px)] resize-none p-2 border ${formErrors.description ? 'border-red-300 bg-red-50' : 'border-gray-200 bg-white'} rounded-md focus:outline-none disabled:opacity-50 ${formErrors.description ? 'focus:border-red-400' : 'focus:border-gray-400'}`}
               placeholder="Describe your project..."
+              aria-label="Project description"
             />
           </div>
         </div>
@@ -549,18 +579,19 @@ export default function ProjectEditForm({ projectId }) {
         <button
           type="submit"
           form="project-form"
-          disabled={status === 'loading' || status === 'updating'}
+          disabled={status.fetchProject === 'loading' || status.updateProject === 'loading'}
           className={`flex items-center gap-2 rounded-full py-2 px-4 text-white transition-colors duration-200 ${
-            status === 'loading' || status === 'updating' ? 'bg-blue-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'
+            status.fetchProject === 'loading' || status.updateProject === 'loading' ? 'bg-blue-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'
           }`}
+          aria-label="Save changes"
         >
-          {status === 'loading' || status === 'updating' ? (
+          {status.fetchProject === 'loading' || status.updateProject === 'loading' ? (
             <>
               <svg
                 className="animate-spin h-5 w-5 text-white"
                 xmlns="http://www.w3.org/2000/svg"
                 fill="none"
-                viewBox="0 24 24"
+                viewBox="0 0 24 24"
               >
                 <circle
                   className="opacity-25"
@@ -589,3 +620,6 @@ export default function ProjectEditForm({ projectId }) {
     </div>
   );
 }
+
+
+

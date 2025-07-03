@@ -26,6 +26,9 @@ const AllTaskList = ({ projectId }) => {
       ? selectTasksByProjectId(state, projectId)
       : state.task.tasks || []
   );
+
+
+  console.log("projet data is ",tasks)
   const status = useSelector(selectTaskStatus);
   const error = useSelector(selectTaskError);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
